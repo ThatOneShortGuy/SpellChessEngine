@@ -15,6 +15,7 @@
 
 void board_from_fen(Board* board, char *postion, char turn, char *castling, char *enpassant, char *halfmoves, char *fullmoves) {
     memset(board, 0, sizeof(Board));
+    board->freeze_loc = board->jump_loc = 65;
     parse_position(board, postion);
     parse_turn(board, turn);
     parse_castling(board, castling);
@@ -56,6 +57,8 @@ void board_setup(Board *board) {
     board->black.freeze_spell = 0b00;
     board->black.num_freeze_spells = 0b101;
     board->turn = 0;
+    board->freeze_loc = 65;
+    board->jump_loc = 65;
 }
 
 void board_print(Board *board) {
@@ -84,9 +87,10 @@ void board_print(Board *board) {
         int freeze_row = board->freeze_loc / 8;
         if (board->jump_loc == i) {
             arr_index += sprintf(arr+arr_index, "\033[102;");
-        } else if ((board->freeze_loc >= i + 7 && board->freeze_loc <= i + 9 && i / 8 == freeze_row - 1) ||
-                   (board->freeze_loc >= i - 1 && board->freeze_loc <= i + 1 && i / 8 == freeze_row) ||
-                   (board->freeze_loc >= i - 9 && board->freeze_loc <= i - 7 && i / 8 == freeze_row + 1)) {
+        } else if (board->freeze_loc != 65 && 
+                  (board->freeze_loc >= i + 7 && board->freeze_loc <= i + 9 && i / 8 == freeze_row - 1) ||
+                  (board->freeze_loc >= i - 1 && board->freeze_loc <= i + 1 && i / 8 == freeze_row) ||
+                  (board->freeze_loc >= i - 9 && board->freeze_loc <= i - 7 && i / 8 == freeze_row + 1)) {
             arr_index += sprintf(arr+arr_index, "\033[106;");
         } else {
             arr_index += sprintf(arr+arr_index, (i % 2 == 0 && i / 8 % 2 == 0 || i % 2 == 1 && i / 8 % 2 == 1) ? "\033[107;" : "\033[100;");
