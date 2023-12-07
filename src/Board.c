@@ -3,15 +3,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#define max(a,b) ((a) > (b) ? (a) : (b))
-
-#ifndef PARSEFEN_H
 #include "ParseFEN.c"
-#endif
-
-#ifndef BOARD_H
 #include "Board.h"
-#endif
+
+#define max(a,b) ((a) > (b) ? (a) : (b))
 
 void board_from_fen(Board* board, char *postion, char turn, char *castling, char *enpassant, char *halfmoves, char *fullmoves) {
     memset(board, 0, sizeof(Board));
@@ -61,6 +56,7 @@ void board_setup(Board *board) {
     board->jump_loc = 65;
 }
 
+__attribute__((optimize("unroll-loops")))
 void board_print(Board *board) {
     char arr[64*(2+11)];
     int arr_index = 0;
@@ -71,7 +67,6 @@ void board_print(Board *board) {
     memset(black_pieces, ' ', 64);
     memset(white_pieces, ' ', 64);
 
-    #pragma unroll
     for (int i = 0; i < 64; i++) {
         #define X(piece, color, name) \
         if (board->color.name.piece_arr & (1ULL << i)) { \
@@ -81,19 +76,18 @@ void board_print(Board *board) {
         #undef X
     }
 
-    #pragma unroll
     for (int i = 0; i < 64; i++) {
         // Set background color
         int freeze_row = board->freeze_loc / 8;
         if (board->jump_loc == i) {
             arr_index += sprintf(arr+arr_index, "\033[102;");
-        } else if (board->freeze_loc != 65 && 
-                  (board->freeze_loc >= i + 7 && board->freeze_loc <= i + 9 && i / 8 == freeze_row - 1) ||
+        } else if ((board->freeze_loc != 65 && 
+                  (board->freeze_loc >= i + 7 && board->freeze_loc <= i + 9 && i / 8 == freeze_row - 1)) ||
                   (board->freeze_loc >= i - 1 && board->freeze_loc <= i + 1 && i / 8 == freeze_row) ||
                   (board->freeze_loc >= i - 9 && board->freeze_loc <= i - 7 && i / 8 == freeze_row + 1)) {
             arr_index += sprintf(arr+arr_index, "\033[106;");
         } else {
-            arr_index += sprintf(arr+arr_index, (i % 2 == 0 && i / 8 % 2 == 0 || i % 2 == 1 && i / 8 % 2 == 1) ? "\033[107;" : "\033[100;");
+            arr_index += sprintf(arr+arr_index, ((i % 2 == 0 && i / 8 % 2 == 0) || (i % 2 == 1 && i / 8 % 2 == 1)) ? "\033[107;" : "\033[100;");
         }
 
         // Set foreground color
@@ -109,4 +103,14 @@ void board_print(Board *board) {
     }
 
     printf("%s", arr);
+}
+
+__attribute__((always_inline))
+inline u64 color_pieces(Color color) {
+    return color.pawns.piece_arr | color.rooks.piece_arr | color.knights.piece_arr | color.bishops.piece_arr | color.queens.piece_arr | color.king.piece_arr;
+}
+
+__attribute__((always_inline))
+inline u64 board_covered_squares(Board board) {
+    return color_pieces(board.white) | color_pieces(board.black);
 }
