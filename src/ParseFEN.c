@@ -23,8 +23,8 @@
     X('P', white, pawns)
 
 void parse_position(Board *board, char *position) {
-    struct Color *black = &board->black;
-    struct Color *white = &board->white;
+    Color *black = &board->black;
+    Color *white = &board->white;
 
     int i = 0;
     for (int parsing_index = 0; i < 64; parsing_index++) {
@@ -63,8 +63,8 @@ void parse_turn(Board *board, char turn) {
 }
 
 void parse_castling(Board *board, char *castling) {
-    struct Color *black = &board->black;
-    struct Color *white = &board->white;
+    Color *black = &board->black;
+    Color *white = &board->white;
     #define LIST_OF_CASTLING \
         X('K', white, 0b01) \
         X('Q', white, 0b10) \

@@ -6,7 +6,8 @@
 typedef unsigned char u8;
 typedef uint16_t u16;
 typedef uint64_t u64;
-union Positions {
+
+typedef union {
     struct {
         u64 a8 : 1;
         u64 b8 : 1;
@@ -75,36 +76,36 @@ union Positions {
     } layout;
     u64 piece_arr;
     u8 row[8];
-};
+} Positions;
 
-struct Color {
-    union Positions pawns;
-    union Positions rooks;
-    union Positions knights;
-    union Positions bishops;
-    union Positions queens;
-    union Positions king;
+typedef struct {
+    Positions pawns;
+    Positions rooks;
+    Positions knights;
+    Positions bishops;
+    Positions queens;
+    Positions king;
     u8 castling         : 2; // 0b00 = no castling, 0b01 = kingside, 0b10 = queenside, 0b11 = both
     u8 en_passant       : 4; // 0b0000 = no en passant, 0b0001 = a, 0b0010 = b, 0b0011 = c, 0b0100 = d, 0b0101 = e, 0b0110 = f, 0b0111 = g, 0b1000 = h
     u8 num_jump_spells  : 2; // 0b00 = 0 jump spells, 0b01 = 1 jump spell, 0b10 = 2 jump spells
     u8 jump_spell       : 2; // 0b00 = jump spell ready, 0b01 = 1 more turn until jump spell, 0b10 = 2 more turns, 0b11 = 3 more turns
     u8 num_freeze_spells: 3; // 0b000 = 0 freeze spells, 0b001 = 1 freeze spell, 0b010 = 2 freeze spells, 0b011 = 3 freeze spells, 0b100 = 4 freeze spells, 0b101 = 5 freeze spells
     u8 freeze_spell     : 2; // 0b00 = freeze spell ready, 0b01 = 1 more turn until freeze spell, 0b10 = 2 more turns, 0b11 = 3 more turns
-};
+} Color;
 
 typedef struct {
-    struct Color white;
-    struct Color black;
-    u8 turn : 1; // 0 = white, 1 = black
+    Color white;
+    Color black;
+    u8 turn      : 1; // 0 = white, 1 = black
     u8 freeze_loc: 7; // Each location is represented by a number from 0 to 63, starting from a1 and ending at h8 with 64 = no freeze
-    u8 jump_loc: 7; // Each location is represented by a number from 0 to 63, starting from a1 and ending at h8 with 64 = no jump
+    u8 jump_loc  : 7; // Each location is represented by a number from 0 to 63, starting from a1 and ending at h8 with 64 = no jump
 } Board;
 
 void board_from_fen(Board* board, char *postion, char turn, char *castling, char *enpassant, char *halfmoves, char *fullmoves);
 void board_add_spells_from_fen(Board* board, char *frozen, char *jumpable, char *spells, char *waiting_spells);
 void board_setup(Board *board);
 void board_print(Board *board);
-u64 color_pieces(Color board);
+u64 color_pieces(Color color);
 u64 board_all_squares(Board board);
 
 #endif
