@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "engine.hpp"
+#include <chrono>
 
-#ifndef BOARD_H
+#include "engine.hpp"
 #include "Board.h"
-#endif
 
 int main(int argc, char *argv[]) {
     if (argc != 7 && argc != 11) {
@@ -29,4 +28,19 @@ int main(int argc, char *argv[]) {
     board_print(&board);
     u16 eval = board_evaluate(board);
     printf("Evaluation: %i\n", eval);
+    auto start = std::chrono::high_resolution_clock::now();
+    MoveQueue moves = get_board_moves(board);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    printf("Time: %lli ns\n", duration);
+    getchar();
+    Move move;
+    u64 num_moves = moves.size();
+    for (u64 i = 0; i < num_moves; i++) {
+        move = moves.top();
+        printf("Move Score: %i\n", move.score);
+        board_print(&move.new_board);
+        moves.pop();
+        getchar();
+    }
 }

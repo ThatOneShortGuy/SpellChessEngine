@@ -100,7 +100,7 @@ void parse_enpassant(Board *board, char *enpassant) {
         exit(1);
     }
 
-    if (enpassant[1] == '3') {
+    if (enpassant[1] == '6') {
         board->black.en_passant = enpassant[0] - 'a' + 1;
     } else {
         board->white.en_passant = enpassant[0] - 'a' + 1;

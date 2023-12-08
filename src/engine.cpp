@@ -38,10 +38,14 @@ i16 board_evaluate(Board board) {
     i16 knight_bishop_score = white_knight_bishop_score - black_knight_bishop_score;
     i16 rook_score = white_rook_score - black_rook_score;
     i16 queen_score = white_queen_score - black_queen_score;
-    return (pawn_score + knight_bishop_score) + (rook_score + queen_score);
+
+    i16 jump_score = 400 * (board.white.num_jump_spells - board.black.num_jump_spells);
+    i16 freeze_score = 250 * (board.white.num_freeze_spells - board.black.num_freeze_spells);
+    return (pawn_score + knight_bishop_score) + (rook_score + queen_score)
+        + (jump_score + freeze_score);
 }
 
-#define insert_move(piece, moves, board, from, to) \
+#define insert_move(piece, moves, board, from, to, expr) \
     Board* new_board = new Board; \
     memcpy(new_board, &board, sizeof(Board)); \
     new_board->turn = !board.turn; \
@@ -56,16 +60,17 @@ i16 board_evaluate(Board board) {
     new_other_color.rooks.piece_arr   &= ~to; \
     new_other_color.queens.piece_arr  &= ~to; \
     new_other_color.king.piece_arr    &= ~to; \
+    expr; \
     \
-    i16 score = board_evaluate(*new_board); \
+    i16 score = board_evaluate(*new_board) * (board.turn ? -1 : 1); \
     moves.push({ score, *new_board });
 
 __attribute__((always_inline))
-inline void add_pawn_moves(MoveQueue moves, Board board, const Color move_color, const Color other_color, const int move_direction) {
+inline void add_pawn_moves(MoveQueue &moves, Board board, const Color move_color, const Color other_color, const int move_direction) {
     u64 from, to;
     u8 row, col;
     u64 all_squares = board_all_squares(board);
-    u64 self_color_pieces = color_pieces(move_color);
+    // u64 self_color_pieces = color_pieces(move_color);
     u64 other_color_pieces = color_pieces(other_color);
 
     for (row = 0; row < 8; row++) {
@@ -74,18 +79,18 @@ inline void add_pawn_moves(MoveQueue moves, Board board, const Color move_color,
             if (!(move_color.pawns.piece_arr & from)) continue;
 
             // If there is not a piece in front of the pawn, it can move 1 square
-            to = from >> (8 * move_direction);
+            to = board.turn ? from << 8 : from >> 8;
             bool clear_front = !(all_squares & to);
             if (clear_front) {
-                insert_move(pawns, moves, board, from, to);
+                insert_move(pawns, moves, board, from, to, 0);
             }
 
             // If the pawn is on the 2nd or 7th rank, it can move 2 squares
-            if (((move_direction == 1 && row == 1)  || (move_direction == -1 && row == 6)) && clear_front) {
-                to = from >> 16 * move_direction;
+            if (((move_direction == 1 && row == 6)  || (move_direction == -1 && row == 1)) && clear_front) {
+                to = board.turn ? from << 16 : from >> 16;
                 if (!(move_color.pawns.piece_arr & to)) {
                     board.turn ? board.black.en_passant = col : board.white.en_passant = col;
-                    insert_move(pawns, moves, board, from, to);
+                    insert_move(pawns, moves, board, from, to, 0);
                     board.turn ? board.black.en_passant = 0 : board.white.en_passant = 0;
                 }
             }
@@ -93,16 +98,18 @@ inline void add_pawn_moves(MoveQueue moves, Board board, const Color move_color,
             // If there is an enemy piece diagonally in front of the pawn, it can be captured
             if (col >= 0 && col != 7) {
                 // Can capture to the right
-                to = from << (-8 * move_direction + 1); // See https://www.desmos.com/calculator/gdfa8kpuzk for reasoning
-                if ((other_color_pieces & to) || (row + 1 == other_color.en_passant)) { // If there is an enemy piece to the right
-                    insert_move(pawns, moves, board, from, to);
+                to = board.turn ? from << 9 : from >> 7;
+                bool enpassantable = col == other_color.en_passant-2;
+                if ((other_color_pieces & to) || enpassantable) { // If there is an enemy piece to the right
+                    insert_move(pawns, moves, board, from, to, if (enpassantable) new_other_color.pawns.piece_arr &= ~(from << 1)); // Pass by name...
                 }
             }
             if (col <= 7 && col != 0) {
                 // Can capture to the left
-                to = from << (-8 * move_direction - 1);
-                if (other_color_pieces & to || (row - 1 == other_color.en_passant)) { // If there is an enemy piece to the left
-                    insert_move(pawns, moves, board, from, to);
+                to = board.turn ? from << 7 : from >> 9;
+                bool enpassantable = col == other_color.en_passant;
+                if ((other_color_pieces & to) || enpassantable) { // If there is an enemy piece to the left
+                    insert_move(pawns, moves, board, from, to, if (enpassantable) new_other_color.pawns.piece_arr &= ~(from >> 1));
                 }
             }
         }

@@ -57,7 +57,7 @@ void board_setup(Board *board) {
 }
 
 __attribute__((optimize("unroll-loops")))
-void board_print(Board *board) {
+void board_print(const Board *board) {
     char arr[64*(2+11)];
     int arr_index = 0;
     char black_pieces[64];
@@ -105,12 +105,10 @@ void board_print(Board *board) {
     printf("%s", arr);
 }
 
-__attribute__((always_inline))
-inline u64 color_pieces(Color color) {
+u64 color_pieces(Color color) {
     return color.pawns.piece_arr | color.rooks.piece_arr | color.knights.piece_arr | color.bishops.piece_arr | color.queens.piece_arr | color.king.piece_arr;
 }
 
-__attribute__((always_inline))
-inline u64 board_covered_squares(Board board) {
+u64 board_all_squares(Board board) {
     return color_pieces(board.white) | color_pieces(board.black);
 }
