@@ -94,14 +94,14 @@ inline void add_pawn_moves(MoveQueue moves, Board board, const Color move_color,
             if (col >= 0 && col != 7) {
                 // Can capture to the right
                 to = from << (-8 * move_direction + 1); // See https://www.desmos.com/calculator/gdfa8kpuzk for reasoning
-                if (other_color_pieces & to) { // If there is an enemy piece to the right
+                if ((other_color_pieces & to) || (row + 1 == other_color.en_passant)) { // If there is an enemy piece to the right
                     insert_move(pawns, moves, board, from, to);
                 }
             }
             if (col <= 7 && col != 0) {
                 // Can capture to the left
                 to = from << (-8 * move_direction - 1);
-                if (other_color_pieces & to) { // If there is an enemy piece to the left
+                if (other_color_pieces & to || (row - 1 == other_color.en_passant)) { // If there is an enemy piece to the left
                     insert_move(pawns, moves, board, from, to);
                 }
             }
