@@ -107,5 +107,6 @@ void board_setup(Board *board);
 void board_print(const Board *board);
 u64 color_pieces(Color color);
 u64 board_all_squares(Board board);
+char* board_to_fen(Board board);
 
 #endif

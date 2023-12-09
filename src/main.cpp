@@ -18,7 +18,6 @@ int main(int argc, char *argv[]) {
     }
 
     Board board; // Initialize board
-
     board_from_fen(&board, argv[1], argv[2][0], argv[3], argv[4], argv[5], argv[6]); // Parse FEN into board
 
     if (argc == 11) {
@@ -38,4 +37,5 @@ int main(int argc, char *argv[]) {
     // getchar();
     printf("Best move: %i\n", best_move.score);
     board_print(&best_move.new_board);
+    printf("%s\n", board_to_fen(best_move.new_board));
 }

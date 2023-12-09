@@ -33,16 +33,19 @@ i16 board_evaluate(Board board) {
     i16 black_rook_score = get_score(board.black.rooks, BLACK_ROOK_SCORE_ARRAY, 500);
     i16 white_queen_score = get_score(board.white.queens, WHITE_QUEEN_SCORE_ARRAY, 900);
     i16 black_queen_score = get_score(board.black.queens, BLACK_QUEEN_SCORE_ARRAY, 900);
+    i16 white_king_score = board.white.king.piece_arr ? 10000 : 0;
+    i16 black_king_score = board.black.king.piece_arr ? 10000 : 0;
 
     i16 pawn_score = white_pawn_score - black_pawn_score;
     i16 knight_bishop_score = white_knight_bishop_score - black_knight_bishop_score;
     i16 rook_score = white_rook_score - black_rook_score;
     i16 queen_score = white_queen_score - black_queen_score;
+    i16 king_score = white_king_score - black_king_score;
 
     i16 jump_score = 400 * (board.white.num_jump_spells - board.black.num_jump_spells);
     i16 freeze_score = 250 * (board.white.num_freeze_spells - board.black.num_freeze_spells);
     return (pawn_score + knight_bishop_score) + (rook_score + queen_score)
-        + (jump_score + freeze_score);
+        + (jump_score + freeze_score) + king_score;
 }
 
 #define insert_move(piece, moves, board, from, to, expr) \
@@ -130,13 +133,13 @@ void get_board_moves(Move& move) {
     move.child_moves = (void*) moves;
 }
 
-Move minimax(Move move, int depth, i16 alpha, i16 beta, bool maximizing_player) {
+Move minimax(Move move, const int depth, i16 alpha, i16 beta, const bool maximizing_player) {
     if (MoveCheckCounter > MAX_MOVES) {
         return move;
     }
     if (depth > MaxDepth) {
         MaxDepth = depth;
-        cout << "MaxDepth: " << MaxDepth << endl;
+        // cout << "MaxDepth: " << MaxDepth << endl;
     }
 
     if (move.child_moves == NULL) {
@@ -146,37 +149,39 @@ Move minimax(Move move, int depth, i16 alpha, i16 beta, bool maximizing_player) 
     MoveQueue moves = *(MoveQueue *) move.child_moves;
     Move next_move;
     Move best_move;
+    best_move.score = maximizing_player ? -32768 : 32767;
     const u64 num_moves = moves.size();
-    i16 best_score = maximizing_player ? -32768 : 32767;
 
     if (maximizing_player) {
         for (u64 i = 0; i < num_moves/3; i++) {
             next_move = moves.top();
             moves.pop();
             next_move = minimax(next_move, depth+1, alpha, beta, !maximizing_player);
-            if (next_move.score > best_score) {
-                best_score = next_move.score;
+
+            if (next_move.score > best_move.score) {
                 best_move = next_move;
             }
-            alpha = MAX(alpha, best_score);
+            alpha = MAX(alpha, best_move.score);
             if (beta <= alpha) {
                 break;
             }
         }
-    } else {
+        return best_move;
+    }
+    else {
         for (u64 i = 0; i < num_moves/3; i++) {
             next_move = moves.top();
             moves.pop();
             next_move = minimax(next_move, depth+1, alpha, beta, !maximizing_player);
-            if (next_move.score < best_score) {
-                best_score = next_move.score;
+
+            if (next_move.score < best_move.score) {
                 best_move = next_move;
             }
-            beta = MIN(beta, best_score);
+            beta = MIN(beta, best_move.score);
             if (beta <= alpha) {
                 break;
             }
         }
+        return best_move;
     }
-    return best_move;
 }

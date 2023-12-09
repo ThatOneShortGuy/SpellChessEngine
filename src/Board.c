@@ -10,7 +10,7 @@
 
 void board_from_fen(Board* board, char *postion, char turn, char *castling, char *enpassant, char *halfmoves, char *fullmoves) {
     memset(board, 0, sizeof(Board));
-    board->freeze_loc = board->jump_loc = 65;
+    board->freeze_loc = board->jump_loc = 64;
     parse_position(board, postion);
     parse_turn(board, turn);
     parse_castling(board, castling);
@@ -81,7 +81,7 @@ void board_print(const Board *board) {
         int freeze_row = board->freeze_loc / 8;
         if (board->jump_loc == i) {
             arr_index += sprintf(arr+arr_index, "\033[102;");
-        } else if ((board->freeze_loc != 65 && 
+        } else if ((board->freeze_loc != 64 && 
                   (board->freeze_loc >= i + 7 && board->freeze_loc <= i + 9 && i / 8 == freeze_row - 1)) ||
                   (board->freeze_loc >= i - 1 && board->freeze_loc <= i + 1 && i / 8 == freeze_row) ||
                   (board->freeze_loc >= i - 9 && board->freeze_loc <= i - 7 && i / 8 == freeze_row + 1)) {
@@ -111,4 +111,75 @@ u64 color_pieces(Color color) {
 
 u64 board_all_squares(Board board) {
     return color_pieces(board.white) | color_pieces(board.black);
+}
+
+char* board_to_fen(Board board) {
+    char *fen =  (char*) calloc(100, sizeof(char));
+    int fen_index = 0;
+
+    for (int row = 0; row < 8; row++) {
+        int empty = 0;
+        for (int col = 0; col < 8; col++) {
+            int i = row * 8 + col;
+            #define X(piece, color, name) \
+            if (board.color.name.piece_arr & (1ULL << i)) { \
+                if (empty != 0) fen[fen_index++] = '0' + empty; \
+                empty = 0; \
+                fen[fen_index++] = piece; \
+                continue; \
+            }
+            LIST_OF_PIECES
+            #undef X
+            empty++;
+        }
+        if (empty != 0) {
+            fen[fen_index++] = '0' + empty;
+        }
+        fen[fen_index++] = '/';
+    }
+
+    fen_index--;
+    fen[fen_index++] = ' ';
+    fen[fen_index++] = board.turn ? 'b' : 'w';
+    fen[fen_index++] = ' ';
+    fen[fen_index++] = board.white.castling ? 'K' : '-';
+    fen[fen_index++] = board.white.castling & 0b10 ? 'Q' : '-';
+    fen[fen_index++] = board.black.castling ? 'k' : '-';
+    fen[fen_index++] = board.black.castling & 0b10 ? 'q' : '-';
+    fen[fen_index++] = ' ';
+    if (board.white.en_passant == 0) {
+        fen[fen_index++] = '-';
+    } else {
+        fen[fen_index++] = 'a' + board.white.en_passant;
+        fen[fen_index++] = board.turn ? '6' : '3';
+    }
+    fen[fen_index++] = ' ';
+    fen[fen_index++] = '0';
+    fen[fen_index++] = ' ';
+    fen[fen_index++] = '0';
+    fen[fen_index++] = ' ';
+    if (board.freeze_loc == 64) {
+        fen[fen_index++] = '-';
+    } else {
+        printf("Freeze loc: %i\n", board.freeze_loc);
+        fen[fen_index++] = 'a' + __builtin_clzll(board.freeze_loc) % 8;
+        fen[fen_index++] = '8' - __builtin_clzll(board.freeze_loc) / 8;
+    }
+    fen[fen_index++] = ' ';
+    if (board.jump_loc == 64) {
+        fen[fen_index++] = '-';
+    } else {
+        fen[fen_index++] = 'a' + __builtin_clzll(board.jump_loc) % 8;
+        fen[fen_index++] = '8' - __builtin_clzll(board.jump_loc) / 8;
+    }
+    fen[fen_index++] = ' ';
+    fen[fen_index++] = '0' + board.white.num_freeze_spells;
+    fen[fen_index++] = '0' + board.white.freeze_spell;
+    fen[fen_index++] = '0' + board.white.num_jump_spells;
+    fen[fen_index++] = '0' + board.white.jump_spell;
+    fen[fen_index++] = ' ';
+    fen[fen_index++] = '0';
+    fen[fen_index++] = '0';
+
+    return fen;
 }
