@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 51e28c5b12c6f53479d7104d4ed4e53d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - chesspiece: {instanceID: 0}
+  - freezeSpellW: {instanceID: 0}
+  - freezeSpellB: {instanceID: 0}
+  - white_queen: {fileID: 21300000, guid: 2261d6121f9eacf498fe49fb3b7ad598, type: 3}
+  - black_queen: {fileID: 21300000, guid: fd5bdffbbf7fade40b7f407cfcdaa833, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
