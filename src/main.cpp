@@ -25,22 +25,17 @@ int main(int argc, char *argv[]) {
         board_add_spells_from_fen(&board, argv[7], argv[8], argv[9], argv[10]); // Parse spells into board
     }
 
-    board_print(&board);
-    u16 eval = board_evaluate(board);
+    // board_print(&board);
+    i16 eval = board_evaluate(board);
     printf("Evaluation: %i\n", eval);
+    Move move = {eval, board, NULL, NULL};
+
     auto start = std::chrono::high_resolution_clock::now();
-    MoveQueue moves = get_board_moves(board);
+    Move best_move = minimax(move, 0, -32768, 32767, !board.turn);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    printf("Time: %lli ns\n", duration);
-    getchar();
-    Move move;
-    u64 num_moves = moves.size();
-    for (u64 i = 0; i < num_moves; i++) {
-        move = moves.top();
-        printf("Move Score: %i\n", move.score);
-        board_print(&move.new_board);
-        moves.pop();
-        getchar();
-    }
+    printf("Time: %f ms\n", ((double) duration)/1000/1000);
+    // getchar();
+    printf("Best move: %i\n", best_move.score);
+    board_print(&best_move.new_board);
 }

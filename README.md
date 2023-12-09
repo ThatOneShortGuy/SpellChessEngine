@@ -11,7 +11,7 @@ The current plan is to have Unity call the compiled C program as a subprocess wi
 # Compiling the Engine
 With gcc installed, run the following command in the root directory of the repo:
 ```bash
-gcc -O3 main.c -o main
+make
 ```
 
 # Running the Engine

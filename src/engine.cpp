@@ -62,11 +62,12 @@ i16 board_evaluate(Board board) {
     new_other_color.king.piece_arr    &= ~to; \
     expr; \
     \
-    i16 score = board_evaluate(*new_board) * (board.turn ? -1 : 1); \
-    moves.push({ score, *new_board });
+    i16 score = board_evaluate(*new_board); \
+    moves.push({ score, *new_board, (void *) &board, NULL}); \
+    MoveCheckCounter++;
 
 __attribute__((always_inline))
-inline void add_pawn_moves(MoveQueue &moves, Board board, const Color move_color, const Color other_color, const int move_direction) {
+inline void add_pawn_moves(MoveQueue &moves, Board board, const Color move_color, const Color other_color) {
     u64 from, to;
     u8 row, col;
     u64 all_squares = board_all_squares(board);
@@ -82,15 +83,15 @@ inline void add_pawn_moves(MoveQueue &moves, Board board, const Color move_color
             to = board.turn ? from << 8 : from >> 8;
             bool clear_front = !(all_squares & to);
             if (clear_front) {
-                insert_move(pawns, moves, board, from, to, 0);
+                insert_move(pawns, moves, board, from, to, ;);
             }
 
             // If the pawn is on the 2nd or 7th rank, it can move 2 squares
-            if (((move_direction == 1 && row == 6)  || (move_direction == -1 && row == 1)) && clear_front) {
+            if (((!board.turn && row == 6)  || (board.turn && row == 1)) && clear_front) {
                 to = board.turn ? from << 16 : from >> 16;
                 if (!(move_color.pawns.piece_arr & to)) {
                     board.turn ? board.black.en_passant = col : board.white.en_passant = col;
-                    insert_move(pawns, moves, board, from, to, 0);
+                    insert_move(pawns, moves, board, from, to, ;);
                     board.turn ? board.black.en_passant = 0 : board.white.en_passant = 0;
                 }
             }
@@ -116,15 +117,66 @@ inline void add_pawn_moves(MoveQueue &moves, Board board, const Color move_color
     }
 }
 
-MoveQueue get_board_moves(Board board) {
-    MoveQueue moves = MoveQueue(MoveCompare());
+void get_board_moves(Move& move) {
+    Board board = move.new_board;
+    MoveQueue *moves = new MoveQueue(DynamicMoveCompare(board.turn));
 
     Color move_color = board.turn ? board.black : board.white;
     Color other_color = board.turn ? board.white : board.black;
-    int move_direction = board.turn ? -1 : 1;
     
     // Pawns
-    add_pawn_moves(moves, board, move_color, other_color, move_direction);
+    add_pawn_moves(*moves, board, move_color, other_color);
 
-    return moves;
+    move.child_moves = (void*) moves;
+}
+
+Move minimax(Move move, int depth, i16 alpha, i16 beta, bool maximizing_player) {
+    if (MoveCheckCounter > MAX_MOVES) {
+        return move;
+    }
+    if (depth > MaxDepth) {
+        MaxDepth = depth;
+        cout << "MaxDepth: " << MaxDepth << endl;
+    }
+
+    if (move.child_moves == NULL) {
+        get_board_moves(move);
+    }
+
+    MoveQueue moves = *(MoveQueue *) move.child_moves;
+    Move next_move;
+    Move best_move;
+    const u64 num_moves = moves.size();
+    i16 best_score = maximizing_player ? -32768 : 32767;
+
+    if (maximizing_player) {
+        for (u64 i = 0; i < num_moves/3; i++) {
+            next_move = moves.top();
+            moves.pop();
+            next_move = minimax(next_move, depth+1, alpha, beta, !maximizing_player);
+            if (next_move.score > best_score) {
+                best_score = next_move.score;
+                best_move = next_move;
+            }
+            alpha = MAX(alpha, best_score);
+            if (beta <= alpha) {
+                break;
+            }
+        }
+    } else {
+        for (u64 i = 0; i < num_moves/3; i++) {
+            next_move = moves.top();
+            moves.pop();
+            next_move = minimax(next_move, depth+1, alpha, beta, !maximizing_player);
+            if (next_move.score < best_score) {
+                best_score = next_move.score;
+                best_move = next_move;
+            }
+            beta = MIN(beta, best_score);
+            if (beta <= alpha) {
+                break;
+            }
+        }
+    }
+    return best_move;
 }

@@ -58,7 +58,7 @@ void board_setup(Board *board) {
 
 __attribute__((optimize("unroll-loops")))
 void board_print(const Board *board) {
-    char arr[64*(2+11)];
+    char arr[64*(2+12)];
     int arr_index = 0;
     char black_pieces[64];
     char white_pieces[64];
