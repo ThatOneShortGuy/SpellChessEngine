@@ -1,7 +1,6 @@
 #include <queue>
 #include <vector>
 #include <iostream>
-#include <functional>
 
 #include "Board.h"
 #include "PieceScores.h"
@@ -139,7 +138,7 @@ Move minimax(Move move, const int depth, i16 alpha, i16 beta, const bool maximiz
     }
     if (depth > MaxDepth) {
         MaxDepth = depth;
-        // cout << "MaxDepth: " << MaxDepth << endl;
+        cout << "MaxDepth: " << MaxDepth << endl;
     }
 
     if (move.child_moves == NULL) {
@@ -152,15 +151,19 @@ Move minimax(Move move, const int depth, i16 alpha, i16 beta, const bool maximiz
     best_move.score = maximizing_player ? -32768 : 32767;
     const u64 num_moves = moves.size();
 
+    if (num_moves == 0) {
+        cout << "No moves" << endl;
+        return move;
+    }
+
     if (maximizing_player) {
         for (u64 i = 0; i < num_moves/3; i++) {
             next_move = moves.top();
             moves.pop();
             next_move = minimax(next_move, depth+1, alpha, beta, !maximizing_player);
 
-            if (next_move.score > best_move.score) {
-                best_move = next_move;
-            }
+            best_move = next_move.score > best_move.score ? next_move: best_move;
+
             alpha = MAX(alpha, best_move.score);
             if (beta <= alpha) {
                 break;
@@ -174,9 +177,8 @@ Move minimax(Move move, const int depth, i16 alpha, i16 beta, const bool maximiz
             moves.pop();
             next_move = minimax(next_move, depth+1, alpha, beta, !maximizing_player);
 
-            if (next_move.score < best_move.score) {
-                best_move = next_move;
-            }
+            best_move = next_move.score < best_move.score ? next_move: best_move;
+
             beta = MIN(beta, best_move.score);
             if (beta <= alpha) {
                 break;

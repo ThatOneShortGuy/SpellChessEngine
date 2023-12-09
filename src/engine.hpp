@@ -4,7 +4,7 @@
 #include "Board.h"
 typedef int16_t i16;
 
-#define MAX_MOVES 5'000'000
+#define MAX_MOVES 10'000'000
 static u64 MoveCheckCounter = 0;
 static int MaxDepth = 0;
 

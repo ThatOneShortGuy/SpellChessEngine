@@ -161,7 +161,6 @@ char* board_to_fen(Board board) {
     if (board.freeze_loc == 64) {
         fen[fen_index++] = '-';
     } else {
-        printf("Freeze loc: %i\n", board.freeze_loc);
         fen[fen_index++] = 'a' + __builtin_clzll(board.freeze_loc) % 8;
         fen[fen_index++] = '8' - __builtin_clzll(board.freeze_loc) / 8;
     }
