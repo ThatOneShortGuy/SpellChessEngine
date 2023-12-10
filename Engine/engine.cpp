@@ -9,7 +9,6 @@
 using namespace std;
 
 static u64 MoveCheckCounter = 0;
-static int MaxDepth = 0;
 
 __attribute__((always_inline))
 inline i16 get_score(Positions position, const int score_array[8][8], const int base_value) {
@@ -56,7 +55,7 @@ i16 board_evaluate(Board board) {
     new_board->turn = !board.turn; \
     Color &new_color = board.turn ? new_board->black : new_board->white; \
     Color &new_other_color = board.turn ? new_board->white : new_board->black; \
-    Color &old_color = board.turn ? board.black : board.white; \
+    const Color &old_color = board.turn ? board.black : board.white; \
     \
     new_color.piece.piece_arr = (old_color.piece.piece_arr & ~from) | to; \
     new_other_color.pawns.piece_arr   &= ~to; \
@@ -72,7 +71,7 @@ i16 board_evaluate(Board board) {
     MoveCheckCounter++;
 
 __attribute__((always_inline))
-inline void add_pawn_moves(MoveQueue &moves, Board board, const Color move_color, const Color other_color) {
+inline void add_pawn_moves(MoveQueue &moves, const Board board, const Color move_color, const Color other_color) {
     u64 from, to;
     u8 row, col;
     u64 all_squares = board_all_squares(board);
@@ -88,16 +87,15 @@ inline void add_pawn_moves(MoveQueue &moves, Board board, const Color move_color
             to = board.turn ? from << 8 : from >> 8;
             bool clear_front = !(all_squares & to);
             if (clear_front) {
-                insert_move(pawns, moves, board, from, to, ;);
+                insert_move(pawns, moves, board, from, to, if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.row[row] = 0; new_color.queens.piece_arr |= to;});
             }
 
             // If the pawn is on the 2nd or 7th rank, it can move 2 squares
             if (((!board.turn && row == 6)  || (board.turn && row == 1)) && clear_front) {
                 to = board.turn ? from << 16 : from >> 16;
-                if (!(move_color.pawns.piece_arr & to)) {
-                    board.turn ? board.black.en_passant = col : board.white.en_passant = col;
+                if (!(all_squares & to)) {
                     insert_move(pawns, moves, board, from, to, ;);
-                    board.turn ? board.black.en_passant = 0 : board.white.en_passant = 0;
+                    new_color.en_passant = col + 1;
                 }
             }
 
@@ -105,18 +103,81 @@ inline void add_pawn_moves(MoveQueue &moves, Board board, const Color move_color
             if (col >= 0 && col != 7) {
                 // Can capture to the right
                 to = board.turn ? from << 9 : from >> 7;
-                bool enpassantable = col == other_color.en_passant-2;
+                bool enpassantable = (col == other_color.en_passant-2) && (row == (board.turn ? 4 : 5));
                 if ((other_color_pieces & to) || enpassantable) { // If there is an enemy piece to the right
-                    insert_move(pawns, moves, board, from, to, if (enpassantable) new_other_color.pawns.piece_arr &= ~(from << 1)); // Pass by name...
+                    insert_move(pawns, moves, board, from, to, if (enpassantable) {new_other_color.pawns.piece_arr &= ~(from << 1);} if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.piece_arr &= ~to; new_color.queens.piece_arr |= to;}); // Pass by name...
                 }
             }
             if (col <= 7 && col != 0) {
                 // Can capture to the left
                 to = board.turn ? from << 7 : from >> 9;
-                bool enpassantable = col == other_color.en_passant;
+                bool enpassantable = col == other_color.en_passant && (row == (board.turn ? 4 : 5));
                 if ((other_color_pieces & to) || enpassantable) { // If there is an enemy piece to the left
-                    insert_move(pawns, moves, board, from, to, if (enpassantable) new_other_color.pawns.piece_arr &= ~(from >> 1));
+                    insert_move(pawns, moves, board, from, to, if (enpassantable) {new_other_color.pawns.piece_arr &= ~(from >> 1);} if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.piece_arr &= ~to; new_color.queens.piece_arr |= to;});
                 }
+            }
+        }
+    }
+}
+
+__attribute__((always_inline))
+inline void add_knight_moves(MoveQueue &moves, const Board board, const Color move_color, const Color other_color) {
+    u64 from, to;
+    u8 row, col;
+
+    u64 self_color_pieces = color_pieces(move_color);
+
+    for (row = 0; row < 8; row++) {
+        for (col = 0; col < 8; col++) {
+            from = 1ULL << (row * 8 + col);
+            if (!(move_color.knights.piece_arr & from)) continue;
+
+            // Up 2, right 1
+            to = from >> 15;
+            if (!(self_color_pieces & to) && row > 1 && col < 7) {
+                insert_move(knights, moves, board, from, to, ;);
+            }
+
+            // Up 2, left 1
+            to = from >> 17;
+            if (!(self_color_pieces & to) && row > 1 && col > 0) {
+                insert_move(knights, moves, board, from, to, ;);
+            }
+
+            // Up 1, right 2
+            to = from >> 6;
+            if (!(self_color_pieces & to) && row > 0 && col < 6) {
+                insert_move(knights, moves, board, from, to, ;);
+            }
+
+            // Up 1, left 2
+            to = from >> 10;
+            if (!(self_color_pieces & to) && row > 0 && col > 1) {
+                insert_move(knights, moves, board, from, to, ;);
+            }
+
+            // Down 1, right 2
+            to = from << 10;
+            if (!(self_color_pieces & to) && row < 7 && col < 6) {
+                insert_move(knights, moves, board, from, to, ;);
+            }
+
+            // Down 1, left 2
+            to = from << 6;
+            if (!(self_color_pieces & to) && row < 7 && col > 1) {
+                insert_move(knights, moves, board, from, to, ;);
+            }
+
+            // Down 2, right 1
+            to = from << 17;
+            if (!(self_color_pieces & to) && row < 6 && col < 7) {
+                insert_move(knights, moves, board, from, to, ;);
+            }
+
+            // Down 2, left 1
+            to = from << 15;
+            if (!(self_color_pieces & to) && row < 6 && col > 0) {
+                insert_move(knights, moves, board, from, to, ;);
             }
         }
     }
@@ -128,20 +189,21 @@ void get_board_moves(Move& move) {
 
     Color move_color = board.turn ? board.black : board.white;
     Color other_color = board.turn ? board.white : board.black;
+
+    // cout << "Move color: " << (board.turn ? "black" : "white") << endl;
     
     // Pawns
     add_pawn_moves(*moves, board, move_color, other_color);
 
+    // Knights
+    add_knight_moves(*moves, board, move_color, other_color);
+
     move.child_moves = (void*) moves;
 }
 
-Move minimax(Move move, const int depth, i16 alpha, i16 beta, const bool maximizing_player) {
-    if (MoveCheckCounter > MAX_MOVES) {
+Move minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximizing_player) {
+    if (MoveCheckCounter > MAX_MOVES || !depth) {
         return move;
-    }
-    if (depth > MaxDepth) {
-        MaxDepth = depth;
-        cout << "MaxDepth: " << MaxDepth << endl;
     }
 
     if (move.child_moves == NULL) {
@@ -149,25 +211,27 @@ Move minimax(Move move, const int depth, i16 alpha, i16 beta, const bool maximiz
     }
 
     MoveQueue moves = *(MoveQueue *) move.child_moves;
-    Move next_move;
-    Move best_move;
+    Move possible_move, next_move, best_move;
     best_move.score = maximizing_player ? -32768 : 32767;
     const u64 num_moves = moves.size();
 
     if (num_moves == 0) {
-        cout << "No moves" << endl;
+        // cout << "No moves" << endl;
         return move;
     }
 
     if (maximizing_player) {
-        for (u64 i = 0; i < num_moves/3; i++) {
-            next_move = moves.top();
+        for (u64 i = 0; i < num_moves; i++) {
+            possible_move = moves.top();
             moves.pop();
-            next_move = minimax(next_move, depth+1, alpha, beta, !maximizing_player);
+            // cout << "White's move" << endl;
+            // board_print(&possible_move.new_board);
+            // getchar();
+            next_move = minimax(possible_move, depth-1, alpha, beta, !maximizing_player);
 
             best_move = next_move.score > best_move.score ? next_move: best_move;
 
-            alpha = MAX(alpha, best_move.score);
+            alpha = MAX(alpha, next_move.score);
             if (beta <= alpha) {
                 break;
             }
@@ -175,14 +239,17 @@ Move minimax(Move move, const int depth, i16 alpha, i16 beta, const bool maximiz
         return best_move;
     }
     else {
-        for (u64 i = 0; i < num_moves/3; i++) {
-            next_move = moves.top();
+        for (u64 i = 0; i < num_moves; i++) {
+            possible_move = moves.top();
             moves.pop();
-            next_move = minimax(next_move, depth+1, alpha, beta, !maximizing_player);
+            // cout << "Black's move\n";
+            // board_print(&possible_move.new_board);
+            // getchar();
+            next_move = minimax(possible_move, depth-1, alpha, beta, !maximizing_player);
 
             best_move = next_move.score < best_move.score ? next_move: best_move;
 
-            beta = MIN(beta, best_move.score);
+            beta = MIN(beta, next_move.score);
             if (beta <= alpha) {
                 break;
             }

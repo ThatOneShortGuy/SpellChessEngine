@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     Move move = {eval, board, NULL, NULL};
 
     auto start = std::chrono::high_resolution_clock::now();
-    Move best_move = minimax(move, 0, -32768, 32767, !board.turn);
+    Move best_move = minimax(move, MAX_DEPTH, -32768, 32767, !board.turn);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     printf("Time: %f ms\n", ((double) duration)/1000/1000);

@@ -105,11 +105,11 @@ void board_print(const Board *board) {
     printf("%s", arr);
 }
 
-u64 color_pieces(Color color) {
+u64 color_pieces(const Color color) {
     return color.pawns.piece_arr | color.rooks.piece_arr | color.knights.piece_arr | color.bishops.piece_arr | color.queens.piece_arr | color.king.piece_arr;
 }
 
-u64 board_all_squares(Board board) {
+u64 board_all_squares(const Board board) {
     return color_pieces(board.white) | color_pieces(board.black);
 }
 

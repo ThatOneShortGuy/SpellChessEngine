@@ -5,6 +5,7 @@
 typedef int16_t i16;
 
 #define MAX_MOVES 10'000'000
+#define MAX_DEPTH 1
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((b) > (a) ? (a) : (b))
@@ -29,4 +30,4 @@ typedef std::priority_queue<Move, std::vector<Move>, DynamicMoveCompare> MoveQue
 
 i16 board_evaluate(Board board);
 void get_board_moves(Move& move);
-Move minimax(Move move, int depth, i16 alpha, i16 beta, bool maximizing_player);
+Move minimax(Move& move, int depth, i16 alpha, i16 beta, bool maximizing_player);

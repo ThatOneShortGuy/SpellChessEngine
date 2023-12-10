@@ -105,8 +105,8 @@ void board_from_fen(Board* board, char *postion, char turn, char *castling, char
 void board_add_spells_from_fen(Board* board, char *frozen, char *jumpable, char *spells, char *waiting_spells);
 void board_setup(Board *board);
 void board_print(const Board *board);
-u64 color_pieces(Color color);
-u64 board_all_squares(Board board);
+u64 color_pieces(const Color color);
+u64 board_all_squares(const Board board);
 char* board_to_fen(Board board);
 
 #endif
