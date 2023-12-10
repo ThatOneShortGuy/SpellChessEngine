@@ -8,6 +8,9 @@
 
 using namespace std;
 
+static u64 MoveCheckCounter = 0;
+static int MaxDepth = 0;
+
 __attribute__((always_inline))
 inline i16 get_score(Positions position, const int score_array[8][8], const int base_value) {
     i16 score = 0;

@@ -5,8 +5,6 @@
 typedef int16_t i16;
 
 #define MAX_MOVES 10'000'000
-static u64 MoveCheckCounter = 0;
-static int MaxDepth = 0;
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((b) > (a) ? (a) : (b))

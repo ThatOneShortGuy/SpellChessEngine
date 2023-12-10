@@ -1,4 +1,4 @@
-SRC = src/
+SRC = Engine/
 GFLAGS = -Wall -O3 -fopenmp -flto -funroll-loops
 
 main: $(SRC)main.o $(SRC)Board.o $(SRC)engine.o
