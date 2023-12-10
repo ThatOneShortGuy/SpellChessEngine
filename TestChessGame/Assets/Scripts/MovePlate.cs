@@ -7,6 +7,7 @@ using UnityEngine;
 
 public class MovePlate : MonoBehaviour
 {
+	
 	public GameObject controller;
 
 	GameObject reference = null;
@@ -14,6 +15,9 @@ public class MovePlate : MonoBehaviour
 	//Board Posistions
 	int matrixX;
 	int matrixY;
+
+	Dictionary<int, string> BoardPosLetter = new Dictionary<int, string>(8);
+
 	
 	//false = movement, true = attacking
 	public bool attack = false;
@@ -24,6 +28,14 @@ public class MovePlate : MonoBehaviour
 		{
 			gameObject.GetComponent<SpriteRenderer>().color = new Color(1.0f, 0.0f, 0.0f, 1.0f);
 		}
+		BoardPosLetter.Add(0, "a");
+		BoardPosLetter.Add(1, "b");
+		BoardPosLetter.Add(2, "c");
+		BoardPosLetter.Add(3, "d");
+		BoardPosLetter.Add(4, "e");
+		BoardPosLetter.Add(5, "f");
+		BoardPosLetter.Add(6, "g");
+		BoardPosLetter.Add(7, "h");
 	}
 	public void OnMouseUp()
 	{
@@ -65,6 +77,9 @@ public class MovePlate : MonoBehaviour
 			&& (MovingPiece.name == "black_pawn" || MovingPiece.name == "white_pawn")) 
 		{
 			MovingPiece.isEnPassantable = true;
+			string PiecePos = BoardPosLetter[matrixX] + (matrixY - 1).ToString();
+			controller.GetComponent<Game>().enPasPos[0] = PiecePos;
+
 		}
 		if (MovingPiece.name == "black_pawn" || MovingPiece.name == "white_pawn")
 		{

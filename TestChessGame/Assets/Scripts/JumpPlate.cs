@@ -8,6 +8,7 @@ public class JumpPlate : MonoBehaviour
 	GameObject reference = null;
 
 	List<GameObject> coloredPlates = new List<GameObject>(); //This will keep track of the plates with colors changed.
+	Dictionary<int, string> BoardPosLetter = new Dictionary<int, string>(8);
 
 	Color jumpColor = new Color(0.0f, 0.0f, 0.8f, 1.0f); // Dark blue color TODO Change Color
 	Color m_OriginalColor;
@@ -25,6 +26,14 @@ public class JumpPlate : MonoBehaviour
 		s_Renderer = GetComponent<SpriteRenderer>();
 		//Fetch the original color of the GameObject
 		m_OriginalColor = s_Renderer.material.color;
+		BoardPosLetter.Add(0, "a");
+		BoardPosLetter.Add(1, "b");
+		BoardPosLetter.Add(2, "c");
+		BoardPosLetter.Add(3, "d");
+		BoardPosLetter.Add(4, "e");
+		BoardPosLetter.Add(5, "f");
+		BoardPosLetter.Add(6, "g");
+		BoardPosLetter.Add(7, "h");
 	}
 
     // Update is called once per frame
@@ -41,6 +50,9 @@ public class JumpPlate : MonoBehaviour
 
 		Game sc = controller.GetComponent<Game>();
 		Spells spellsScript = reference.GetComponent<Spells>();
+
+		string jumpPos = BoardPosLetter[matrixX] + (matrixY).ToString();
+		game.jumpPiece = jumpPos;
 
 		GameObject plate = sc.jumpPlates[matrixX, matrixY];
 		if (plate != null)

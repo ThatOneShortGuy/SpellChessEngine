@@ -15,6 +15,8 @@ public class FreezePlate : MonoBehaviour
 	int matrixX;
 	int matrixY;
 
+	Dictionary<int, string> BoardPosLetter = new Dictionary<int, string>(8);
+
 	//When the mouse hovers over the GameObject, it turns to this color
 	Color freezeColor = new Color(0.0f, 0.0f, 0.8f, 1.0f); // Dark blue color
 
@@ -31,6 +33,14 @@ public class FreezePlate : MonoBehaviour
 		s_Renderer = GetComponent<SpriteRenderer>();
 		//Fetch the original color of the GameObject
 		m_OriginalColor = s_Renderer.material.color;
+		BoardPosLetter.Add(0, "a");
+		BoardPosLetter.Add(1, "b");
+		BoardPosLetter.Add(2, "c");
+		BoardPosLetter.Add(3, "d");
+		BoardPosLetter.Add(4, "e");
+		BoardPosLetter.Add(5, "f");
+		BoardPosLetter.Add(6, "g");
+		BoardPosLetter.Add(7, "h");
 	}
 	void Update()
 	{
@@ -43,7 +53,10 @@ public class FreezePlate : MonoBehaviour
 		
 		Game game = controller.GetComponent<Game>();
 
-		Game sc = controller.GetComponent<Game>();
+		string FrozenPos = BoardPosLetter[matrixX] + (matrixY).ToString();
+		game.frozenPiece = FrozenPos;
+
+	   Game sc = controller.GetComponent<Game>();
 		int boardSize = 8; // Assuming an 8x8 chess board
 		Spells spellsScript = reference.GetComponent<Spells>();
 		int fIndex = 0; //I gotta use this to fill my arrays of frozen pieces.

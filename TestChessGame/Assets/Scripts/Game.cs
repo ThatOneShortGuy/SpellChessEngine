@@ -16,17 +16,19 @@ public class Game : MonoBehaviour
 	Spells cm;
 	//Stuff for Fen Creation
 	Dictionary<string, string>FenCodes = new Dictionary<string, string>(32);
-	int bTurn = 0;
+
 	int wTurn = 0;
 	int	fTurn = 0;
-	string[] enPasPos = new string[1];
+	public string[] enPasPos = new string[1];
 
 	//Can castle boolean values for Fen (King side, Queen side)
 	public bool K = true;
 	public bool Q = true;
 	public bool k = true;
 	public bool q = true;
-	
+
+	public string frozenPiece;
+	public string jumpPiece;
 
 	//Positions and team for each chesspiece
 	private GameObject[,] positions = new GameObject[8, 8];
@@ -316,7 +318,30 @@ public class Game : MonoBehaviour
 		if (!K && !Q && !k && !q)
 			Fen += "-";
 
+		if (enPasPos[0] == "")
+			Fen += " -";
+		else
+			Fen += " " + enPasPos[0];
+
 		Fen += " " + wTurn.ToString() + fTurn.ToString();
+
+		if (frozenPiece == "")
+			Fen += " -";
+		else
+		{
+			Fen += " " + frozenPiece;
+			frozenPiece = "";
+		}
+
+		if (jumpPiece == "")
+			Fen += " -";
+		else
+		{
+			Fen += " " + jumpPiece;
+			jumpPiece = "";
+		}
+		Fen += " " + WFreezeSpells.ToString() + WJumpSpells.ToString() + BFreezeSpells.ToString() + BJumpSpells.ToString();
+		Fen += " " + wCanUseSpell.ToString() + wCanUseSpellj.ToString() + bCanUseSpell.ToString() + bCanUseSpellj.ToString();
 
 		print(Fen);
 	}
