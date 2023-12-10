@@ -67,7 +67,7 @@ i16 board_evaluate(Board board) {
     expr; \
     \
     i16 score = board_evaluate(*new_board); \
-    moves.push({ score, *new_board, (void *) &board, NULL}); \
+    moves.push({ score, *new_board, NULL}); \
     MoveCheckCounter++;
 
 __attribute__((always_inline))
@@ -201,9 +201,9 @@ void get_board_moves(Move& move) {
     move.child_moves = (void*) moves;
 }
 
-Move minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximizing_player) {
-    if (MoveCheckCounter > MAX_MOVES || !depth) {
-        return move;
+i16 minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximizing_player) {
+    if (MoveCheckCounter > MAX_MOVES || !depth || move.new_board.white.king.piece_arr == 0 || move.new_board.black.king.piece_arr == 0) {
+        return move.score;
     }
 
     if (move.child_moves == NULL) {
@@ -211,49 +211,94 @@ Move minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximi
     }
 
     MoveQueue moves = *(MoveQueue *) move.child_moves;
-    Move possible_move, next_move, best_move;
-    best_move.score = maximizing_player ? -32768 : 32767;
+    Move possible_move;
     const u64 num_moves = moves.size();
+    i16 eval, best_score = maximizing_player ? -32768 : 32767;
 
     if (num_moves == 0) {
         // cout << "No moves" << endl;
-        return move;
+        return move.score;
     }
 
     if (maximizing_player) {
         for (u64 i = 0; i < num_moves; i++) {
             possible_move = moves.top();
             moves.pop();
-            // cout << "White's move" << endl;
+            eval = minimax(possible_move, depth-1, alpha, beta, !maximizing_player);
+            alpha = MAX(alpha, eval);
+            // cout << "White's score: " << eval << ", Best Score: " << best_score << ", (Alpha, Beta): " << alpha << ',' << beta << endl;
             // board_print(&possible_move.new_board);
             // getchar();
-            next_move = minimax(possible_move, depth-1, alpha, beta, !maximizing_player);
-
-            best_move = next_move.score > best_move.score ? next_move: best_move;
-
-            alpha = MAX(alpha, next_move.score);
+            best_score = MAX(best_score, eval);
             if (beta <= alpha) {
                 break;
             }
         }
-        return best_move;
+        return best_score;
     }
-    else {
+    for (u64 i = 0; i < num_moves; i++) {
+        possible_move = moves.top();
+        moves.pop();
+        eval = minimax(possible_move, depth-1, alpha, beta, !maximizing_player);
+        beta = MIN(beta, eval);
+        // cout << "Black's score: " << eval << ", Best Score: " << best_score << ", (Alpha, Beta): " << alpha << ',' << beta << endl;
+        // board_print(&possible_move.new_board);
+        // getchar();
+        best_score = MIN(best_score, eval);
+        if (beta <= alpha) {
+            break;
+        }
+    }
+    return best_score;
+}
+
+Move get_action(Board board) {
+    Move move = {0, board, NULL};
+    i16 alpha = -32768, beta = 32767, eval;
+    i16 best_score = board.turn ? 32767 : -32768;
+    bool maximizing_player = !board.turn;
+    get_board_moves(move);
+
+    MoveQueue moves = *(MoveQueue *) move.child_moves;
+    Move best_action = moves.top();
+    u64 num_moves = moves.size();
+    
+    if (maximizing_player) {
         for (u64 i = 0; i < num_moves; i++) {
-            possible_move = moves.top();
+            move = moves.top();
             moves.pop();
-            // cout << "Black's move\n";
-            // board_print(&possible_move.new_board);
+            eval = minimax(move, MAX_DEPTH, alpha, beta, !maximizing_player);
+            if (eval > best_score) {
+                best_action = move;
+            }
+            alpha = MAX(alpha, eval);
+            // cout << "White's Score: " << eval << ", Best Score: " << best_score << ", (Alpha, Beta): " << alpha << ',' << beta << endl;
+            // board_print(&move.new_board);
             // getchar();
-            next_move = minimax(possible_move, depth-1, alpha, beta, !maximizing_player);
-
-            best_move = next_move.score < best_move.score ? next_move: best_move;
-
-            beta = MIN(beta, next_move.score);
+            best_score = MAX(best_score, eval);
             if (beta <= alpha) {
                 break;
             }
         }
-        return best_move;
+        best_action.score = best_score;
+        return best_action;
     }
+    for (u64 i = 0; i < num_moves; i++) {
+        move = moves.top();
+        moves.pop();
+        // cout << "Black's move\n";
+        // board_print(&move.new_board);
+        // getchar();
+        eval = minimax(move, MAX_DEPTH, alpha, beta, !maximizing_player);
+        if (eval < best_score) {
+            best_action = move;
+        }
+        best_score = MIN(best_score, eval);
+        beta = MIN(beta, eval);
+        if (beta <= alpha) {
+            break;
+        }
+    }
+    best_action.score = best_score;
+    return best_action;
 }
