@@ -81,10 +81,10 @@ void board_print(const Board *board) {
         int freeze_row = board->freeze_loc / 8;
         if (board->jump_loc == i) {
             arr_index += sprintf(arr+arr_index, "\033[102;");
-        } else if ((board->freeze_loc != 64 && 
-                  (board->freeze_loc >= i + 7 && board->freeze_loc <= i + 9 && i / 8 == freeze_row - 1)) ||
+        } else if (board->freeze_loc != 64 && (
+                  (board->freeze_loc >= i + 7 && board->freeze_loc <= i + 9 && i / 8 == freeze_row - 1) ||
                   (board->freeze_loc >= i - 1 && board->freeze_loc <= i + 1 && i / 8 == freeze_row) ||
-                  (board->freeze_loc >= i - 9 && board->freeze_loc <= i - 7 && i / 8 == freeze_row + 1)) {
+                  (board->freeze_loc >= i - 9 && board->freeze_loc <= i - 7 && i / 8 == freeze_row + 1))) {
             arr_index += sprintf(arr+arr_index, "\033[106;");
         } else {
             arr_index += sprintf(arr+arr_index, ((i % 2 == 0 && i / 8 % 2 == 0) || (i % 2 == 1 && i / 8 % 2 == 1)) ? "\033[107;" : "\033[100;");
@@ -173,12 +173,14 @@ char* board_to_fen(Board board) {
     }
     fen[fen_index++] = ' ';
     fen[fen_index++] = '0' + board.white.num_freeze_spells;
-    fen[fen_index++] = '0' + board.white.freeze_spell;
     fen[fen_index++] = '0' + board.white.num_jump_spells;
-    fen[fen_index++] = '0' + board.white.jump_spell;
+    fen[fen_index++] = '0' + board.black.num_freeze_spells;
+    fen[fen_index++] = '0' + board.black.num_jump_spells;
     fen[fen_index++] = ' ';
-    fen[fen_index++] = '0';
-    fen[fen_index++] = '0';
+    fen[fen_index++] = '0' + board.white.freeze_spell;
+    fen[fen_index++] = '0' + board.white.jump_spell;
+    fen[fen_index++] = '0' + board.black.freeze_spell;
+    fen[fen_index++] = '0' + board.black.jump_spell;
 
     return fen;
 }

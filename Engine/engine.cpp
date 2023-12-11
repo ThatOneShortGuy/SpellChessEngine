@@ -49,7 +49,12 @@ i16 board_evaluate(Board board) {
         + (jump_score + freeze_score) + king_score;
 }
 
-#define insert_move(piece, moves, board, from, to, expr) \
+#define in_freeze_range(row, col, freeze_pos) \
+    (freeze_pos != 64 && ( \
+    ((freeze_pos % 8) - 1 <= col && col <= (freeze_pos % 8) + 1) && \
+    ((freeze_pos / 8) - 1 <= row && row <= (freeze_pos / 8) + 1)))
+
+#define insert_move(piece, moves, board, from, to, freeze_pos, expr) \
     Board* new_board = new Board; \
     memcpy(new_board, &board, sizeof(Board)); \
     new_board->turn = !board.turn; \
@@ -64,6 +69,10 @@ i16 board_evaluate(Board board) {
     new_other_color.rooks.piece_arr   &= ~to; \
     new_other_color.queens.piece_arr  &= ~to; \
     new_other_color.king.piece_arr    &= ~to; \
+    new_board->freeze_loc = freeze_pos; \
+    if (freeze_pos == 64) { \
+        new_color.freeze_spell -= new_color.freeze_spell ? 1 : 0;\
+    } else {new_color.num_freeze_spells--; new_color.freeze_spell = 3;} \
     expr; \
     \
     i16 score = board_evaluate(*new_board); \
@@ -81,39 +90,44 @@ inline void add_pawn_moves(MoveQueue &moves, const Board board, const Color move
     for (row = 0; row < 8; row++) {
         for (col = 0; col < 8; col++) {
             from = 1ULL << (row * 8 + col);
-            if (!(move_color.pawns.piece_arr & from)) continue;
-
-            // If there is not a piece in front of the pawn, it can move 1 square
-            to = board.turn ? from << 8 : from >> 8;
-            bool clear_front = !(all_squares & to);
-            if (clear_front) {
-                insert_move(pawns, moves, board, from, to, if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.row[row] = 0; new_color.queens.piece_arr |= to;});
-            }
-
-            // If the pawn is on the 2nd or 7th rank, it can move 2 squares
-            if (((!board.turn && row == 6)  || (board.turn && row == 1)) && clear_front) {
-                to = board.turn ? from << 16 : from >> 16;
-                if (!(all_squares & to)) {
-                    insert_move(pawns, moves, board, from, to, ;);
-                    new_color.en_passant = col + 1;
+            for (int freeze_pos = 0; freeze_pos < 65; freeze_pos++) {
+                if (freeze_pos != 64 && (!(other_color_pieces & (1ULL << freeze_pos)) || move_color.num_freeze_spells == 0 || move_color.freeze_spell != 0)) {
+                    continue;
                 }
-            }
+                if (!(move_color.pawns.piece_arr & from) || in_freeze_range(row, col, freeze_pos) || in_freeze_range(row, col, board.freeze_loc)) continue;
 
-            // If there is an enemy piece diagonally in front of the pawn, it can be captured
-            if (col >= 0 && col != 7) {
-                // Can capture to the right
-                to = board.turn ? from << 9 : from >> 7;
-                bool enpassantable = (col == other_color.en_passant-2) && (row == (board.turn ? 4 : 5));
-                if ((other_color_pieces & to) || enpassantable) { // If there is an enemy piece to the right
-                    insert_move(pawns, moves, board, from, to, if (enpassantable) {new_other_color.pawns.piece_arr &= ~(from << 1);} if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.piece_arr &= ~to; new_color.queens.piece_arr |= to;}); // Pass by name...
+                // If there is not a piece in front of the pawn, it can move 1 square
+                to = board.turn ? from << 8 : from >> 8;
+                bool clear_front = !(all_squares & to);
+                if (clear_front) {
+                    insert_move(pawns, moves, board, from, to, freeze_pos, if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.row[row] = 0; new_color.queens.piece_arr |= to;});
                 }
-            }
-            if (col <= 7 && col != 0) {
-                // Can capture to the left
-                to = board.turn ? from << 7 : from >> 9;
-                bool enpassantable = col == other_color.en_passant && (row == (board.turn ? 4 : 5));
-                if ((other_color_pieces & to) || enpassantable) { // If there is an enemy piece to the left
-                    insert_move(pawns, moves, board, from, to, if (enpassantable) {new_other_color.pawns.piece_arr &= ~(from >> 1);} if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.piece_arr &= ~to; new_color.queens.piece_arr |= to;});
+
+                // If the pawn is on the 2nd or 7th rank, it can move 2 squares
+                if (((!board.turn && row == 6)  || (board.turn && row == 1)) && clear_front) {
+                    to = board.turn ? from << 16 : from >> 16;
+                    if (!(all_squares & to)) {
+                        insert_move(pawns, moves, board, from, to, freeze_pos, ;);
+                        new_color.en_passant = col + 1;
+                    }
+                }
+
+                // If there is an enemy piece diagonally in front of the pawn, it can be captured
+                if (col >= 0 && col != 7) {
+                    // Can capture to the right
+                    to = board.turn ? from << 9 : from >> 7;
+                    bool enpassantable = (col == other_color.en_passant-2) && (row == (board.turn ? 4 : 5));
+                    if ((other_color_pieces & to) || enpassantable) { // If there is an enemy piece to the right
+                        insert_move(pawns, moves, board, from, to, freeze_pos, if (enpassantable) {new_other_color.pawns.piece_arr &= ~(from << 1);} if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.piece_arr &= ~to; new_color.queens.piece_arr |= to;}); // Pass by name...
+                    }
+                }
+                if (col <= 7 && col != 0) {
+                    // Can capture to the left
+                    to = board.turn ? from << 7 : from >> 9;
+                    bool enpassantable = col == other_color.en_passant && (row == (board.turn ? 4 : 5));
+                    if ((other_color_pieces & to) || enpassantable) { // If there is an enemy piece to the left
+                        insert_move(pawns, moves, board, from, to, freeze_pos, if (enpassantable) {new_other_color.pawns.piece_arr &= ~(from >> 1);} if (to < 256 || to > (1ULL << 8*7)) {new_color.pawns.piece_arr &= ~to; new_color.queens.piece_arr |= to;});
+                    }
                 }
             }
         }
@@ -126,58 +140,64 @@ inline void add_knight_moves(MoveQueue &moves, const Board board, const Color mo
     u8 row, col;
 
     u64 self_color_pieces = color_pieces(move_color);
+    u64 other_color_pieces = color_pieces(other_color);
 
     for (row = 0; row < 8; row++) {
         for (col = 0; col < 8; col++) {
             from = 1ULL << (row * 8 + col);
-            if (!(move_color.knights.piece_arr & from)) continue;
+            for (int freeze_pos = 0; freeze_pos < 65; freeze_pos++) {
+                if (freeze_pos != 64 && (!(other_color_pieces & (1ULL << freeze_pos)) || move_color.num_freeze_spells == 0 || move_color.freeze_spell != 0)) {
+                    continue;
+                }
+                if (!(move_color.knights.piece_arr & from) || in_freeze_range(row, col, freeze_pos) || in_freeze_range(row, col, board.freeze_loc)) continue;
 
-            // Up 2, right 1
-            to = from >> 15;
-            if (!(self_color_pieces & to) && row > 1 && col < 7) {
-                insert_move(knights, moves, board, from, to, ;);
-            }
+                // Up 2, right 1
+                to = from >> 15;
+                if (!(self_color_pieces & to) && row > 1 && col < 7) {
+                    insert_move(knights, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Up 2, left 1
-            to = from >> 17;
-            if (!(self_color_pieces & to) && row > 1 && col > 0) {
-                insert_move(knights, moves, board, from, to, ;);
-            }
+                // Up 2, left 1
+                to = from >> 17;
+                if (!(self_color_pieces & to) && row > 1 && col > 0) {
+                    insert_move(knights, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Up 1, right 2
-            to = from >> 6;
-            if (!(self_color_pieces & to) && row > 0 && col < 6) {
-                insert_move(knights, moves, board, from, to, ;);
-            }
+                // Up 1, right 2
+                to = from >> 6;
+                if (!(self_color_pieces & to) && row > 0 && col < 6) {
+                    insert_move(knights, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Up 1, left 2
-            to = from >> 10;
-            if (!(self_color_pieces & to) && row > 0 && col > 1) {
-                insert_move(knights, moves, board, from, to, ;);
-            }
+                // Up 1, left 2
+                to = from >> 10;
+                if (!(self_color_pieces & to) && row > 0 && col > 1) {
+                    insert_move(knights, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Down 1, right 2
-            to = from << 10;
-            if (!(self_color_pieces & to) && row < 7 && col < 6) {
-                insert_move(knights, moves, board, from, to, ;);
-            }
+                // Down 1, right 2
+                to = from << 10;
+                if (!(self_color_pieces & to) && row < 7 && col < 6) {
+                    insert_move(knights, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Down 1, left 2
-            to = from << 6;
-            if (!(self_color_pieces & to) && row < 7 && col > 1) {
-                insert_move(knights, moves, board, from, to, ;);
-            }
+                // Down 1, left 2
+                to = from << 6;
+                if (!(self_color_pieces & to) && row < 7 && col > 1) {
+                    insert_move(knights, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Down 2, right 1
-            to = from << 17;
-            if (!(self_color_pieces & to) && row < 6 && col < 7) {
-                insert_move(knights, moves, board, from, to, ;);
-            }
+                // Down 2, right 1
+                to = from << 17;
+                if (!(self_color_pieces & to) && row < 6 && col < 7) {
+                    insert_move(knights, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Down 2, left 1
-            to = from << 15;
-            if (!(self_color_pieces & to) && row < 6 && col > 0) {
-                insert_move(knights, moves, board, from, to, ;);
+                // Down 2, left 1
+                to = from << 15;
+                if (!(self_color_pieces & to) && row < 6 && col > 0) {
+                    insert_move(knights, moves, board, from, to, freeze_pos, ;);
+                }
             }
         }
     }
@@ -195,54 +215,59 @@ inline void add_bishop_moves(MoveQueue &moves, const Board board, const Color mo
     for (row = 0; row < 8; row++) {
         for (col = 0; col < 8; col++) {
             from = 1ULL << (row * 8 + col);
-            if (!(move_color.bishops.piece_arr & from)) continue;
+            for (int freeze_pos = 0; freeze_pos < 65; freeze_pos++) {
+                if (freeze_pos != 64 && (!(other_color_pieces & (1ULL << freeze_pos)) || move_color.num_freeze_spells == 0 || move_color.freeze_spell != 0)) {
+                    continue;
+                }
+                if (!(move_color.bishops.piece_arr & from) || in_freeze_range(row, col, freeze_pos) || in_freeze_range(row, col, board.freeze_loc)) continue;
 
-            // Up right
-            to = from >> 7;
-            i = col; j = row;
-            while (!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j > 0) {
-                insert_move(bishops, moves, board, from, to, ;);
-                to >>= 7;
-                i++; j--;
-            }
-            if (i < 7 && j > 0 && (other_color_pieces & to)) {
-                insert_move(bishops, moves, board, from, to, ;);
-            }
+                // Up right
+                to = from >> 7;
+                i = col; j = row;
+                while (!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j > 0) {
+                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    to >>= 7;
+                    i++; j--;
+                }
+                if (i < 7 && j > 0 && (other_color_pieces & to)) {
+                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Up left
-            to = from >> 9;
-            i = col; j = row;
-            while (!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0 && j > 0) {
-                insert_move(bishops, moves, board, from, to, ;);
-                to >>= 9;
-                i--; j--;
-            }
-            if (i > 0 && j > 0 && (other_color_pieces & to)) {
-                insert_move(bishops, moves, board, from, to, ;);
-            }
+                // Up left
+                to = from >> 9;
+                i = col; j = row;
+                while (!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0 && j > 0) {
+                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    to >>= 9;
+                    i--; j--;
+                }
+                if (i > 0 && j > 0 && (other_color_pieces & to)) {
+                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Down right
-            to = from << 9;
-            i = col; j = row;
-            while (!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j < 7) {
-                insert_move(bishops, moves, board, from, to, ;);
-                to <<= 9;
-                i++; j++;
-            }
-            if (i < 7 && j < 7 && (other_color_pieces & to)) {
-                insert_move(bishops, moves, board, from, to, ;);
-            }
+                // Down right
+                to = from << 9;
+                i = col; j = row;
+                while (!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j < 7) {
+                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    to <<= 9;
+                    i++; j++;
+                }
+                if (i < 7 && j < 7 && (other_color_pieces & to)) {
+                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                }
 
-            // Down left
-            to = from << 7;
-            i = col; j = row;
-            while (!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0 && j < 7) {
-                insert_move(bishops, moves, board, from, to, ;);
-                to <<= 7;
-                i--; j++;
-            }
-            if (i > 0 && j < 7 && (other_color_pieces & to)) {
-                insert_move(bishops, moves, board, from, to, ;);
+                // Down left
+                to = from << 7;
+                i = col; j = row;
+                while (!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0 && j < 7) {
+                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    to <<= 7;
+                    i--; j++;
+                }
+                if (i > 0 && j < 7 && (other_color_pieces & to)) {
+                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                }
             }
         }
     }
@@ -261,7 +286,7 @@ void get_board_moves(Move& move) {
     add_pawn_moves(*moves, board, move_color, other_color);
 
     // Knights
-    // add_knight_moves(*moves, board, move_color, other_color);
+    add_knight_moves(*moves, board, move_color, other_color);
 
     // Bishops
     add_bishop_moves(*moves, board, move_color, other_color);
@@ -343,12 +368,13 @@ Move get_action(Board board) {
             }
             alpha = MAX(alpha, eval);
             // cout << "White's Score: " << eval << ", Best Score: " << best_score << ", (Alpha, Beta): " << alpha << ',' << beta << endl;
+            // cout << (int) move.new_board.white.num_freeze_spells << ',' << (int) move.new_board.white.freeze_spell << endl;
             // board_print(&move.new_board);
             // getchar();
             best_score = MAX(best_score, eval);
-            if (beta <= alpha) {
-                break;
-            }
+            // if (beta <= alpha) {
+            //     break;
+            // }
         }
         best_action.score = best_score;
         return best_action;
