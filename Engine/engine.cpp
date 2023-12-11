@@ -343,7 +343,6 @@ i16 minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximiz
             // getchar();
             best_score = MAX(best_score, eval);
             delete (MoveQueue *) possible_move.child_moves;
-            delete (Board *) &possible_move.new_board;
             if (beta <= alpha) {
                 break;
             }
@@ -360,7 +359,6 @@ i16 minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximiz
         // getchar();
         best_score = MIN(best_score, eval);
         delete (MoveQueue *) possible_move.child_moves;
-        delete (Board *) &possible_move.new_board;
         if (beta <= alpha) {
             break;
         }
