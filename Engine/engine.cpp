@@ -292,7 +292,161 @@ inline void add_bishop_moves(MoveQueue &moves, const Board board, const Color mo
     #undef inserts
 }
 
-void get_board_moves(Move& move) {
+__attribute__((always_inline))
+inline void add_rook_moves(MoveQueue &moves, const Board board, const Color move_color, const Color other_color) {
+    u64 from, to;
+    u8 row, col;
+    int i, j;
+
+    u64 self_color_pieces = color_pieces(move_color);
+    u64 other_color_pieces = color_pieces(other_color);
+    u64 all_squares = self_color_pieces | other_color_pieces;
+
+    #define inserts \
+        if (!(to == (1ULL << jump_pos))) { \
+            if (move_color.rooks.piece_arr & from) {insert_move(rooks, moves, board, from, to, freeze_pos, jump_pos, ;)} \
+            else {insert_move(queens, moves, board, from, to, freeze_pos, jump_pos, ;)} \
+        }
+    
+    for (row = 0; row < 8; row++) {
+        for (col = 0; col < 8; col++) {
+            from = 1ULL << (row * 8 + col);
+            for (int freeze_pos = 0; freeze_pos < 65; freeze_pos++) {
+                if (freeze_pos != 64 && (!(other_color_pieces & (1ULL << freeze_pos)) || move_color.num_freeze_spells == 0 || move_color.freeze_spell != 0)) {
+                    continue;
+                }
+
+                if (!((move_color.rooks.piece_arr & from) || (move_color.queens.piece_arr & from)) || in_freeze_range(row, col, freeze_pos) || in_freeze_range(row, col, board.freeze_loc)) continue;
+                for (int jump_pos = 0; jump_pos < 65; jump_pos++) {
+                    if (jump_pos != 64 && (!(all_squares & (1ULL << jump_pos)) || move_color.num_jump_spells == 0 || move_color.jump_spell != 0)) continue;
+
+                    // Up
+                    to = from >> 8;
+                    i = col; j = row;
+                    while ((!(self_color_pieces & to) && !(other_color_pieces & to) && j > 0) || (to == (1ULL << jump_pos))) {
+                        inserts
+                        to >>= 8;
+                        j--;
+                    }
+                    if (j > 0 && (other_color_pieces & to)) {
+                        inserts
+                    }
+
+                    // Down
+                    to = from << 8;
+                    i = col; j = row;
+                    while ((!(self_color_pieces & to) && !(other_color_pieces & to) && j < 7) || (to == (1ULL << jump_pos))) {
+                        inserts
+                        to <<= 8;
+                        j++;
+                    }
+                    if (j < 7 && (other_color_pieces & to)) {
+                        inserts
+                    }
+
+                    // Right
+                    to = from << 1;
+                    i = col; j = row;
+                    while ((!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7) || (to == (1ULL << jump_pos))) {
+                        inserts
+                        to <<= 1;
+                        i++;
+                    }
+                    if (i < 7 && (other_color_pieces & to)) {
+                        inserts
+                    }
+
+                    // Left
+                    to = from >> 1;
+                    i = col; j = row;
+                    while ((!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0) || (to == (1ULL << jump_pos))) {
+                        inserts
+                        to >>= 1;
+                        i--;
+                    }
+                    if (i > 0 && (other_color_pieces & to)) {
+                        inserts
+                    }
+                }
+            }
+        }
+    }
+    #undef inserts
+}
+
+__attribute__((always_inline))
+inline void add_king_moves(MoveQueue &moves, const Board board, const Color move_color, const Color other_color) {
+    u64 from, to;
+    u8 row, col;
+
+    u64 self_color_pieces = color_pieces(move_color);
+    u64 other_color_pieces = color_pieces(other_color);
+
+    #define inserts insert_move(king, moves, board, from, to, freeze_pos, 64, ;)
+    
+    from = move_color.king.piece_arr;
+    row = __builtin_ctzll(from) / 8;
+    col = __builtin_ctzll(from) % 8;
+    for (int freeze_pos = 0; freeze_pos < 65; freeze_pos++) {
+        if (freeze_pos != 64 && (!(other_color_pieces & (1ULL << freeze_pos)) || move_color.num_freeze_spells == 0 || move_color.freeze_spell != 0)) {
+            continue;
+        }
+
+        if (in_freeze_range(row, col, freeze_pos) || in_freeze_range(row, col, board.freeze_loc)) continue;
+
+        // Up
+        to = from >> 8;
+        if (!(self_color_pieces & to) && row > 0) {
+            inserts
+        }
+
+        // Down
+        to = from << 8;
+        if (!(self_color_pieces & to) && row < 7) {
+            inserts
+        }
+
+        // Right
+        to = from << 1;
+        if (!(self_color_pieces & to) && col < 7) {
+            inserts
+        }
+
+        // Left
+        to = from >> 1;
+        if (!(self_color_pieces & to) && col > 0) {
+            inserts
+        }
+
+        // Up right
+        to = from >> 7;
+        if (!(self_color_pieces & to) && row > 0 && col < 7) {
+            inserts
+        }
+
+        // Up left
+        to = from >> 9;
+        if (!(self_color_pieces & to) && row > 0 && col > 0) {
+            inserts
+        }
+
+        // Down right
+        to = from << 9;
+        if (!(self_color_pieces & to) && row < 7 && col < 7) {
+            inserts
+        }
+
+        // Down left
+        to = from << 7;
+        if (!(self_color_pieces & to) && row < 7 && col > 0) {
+            inserts
+        }
+    }
+    #undef inserts
+}
+
+__attribute__((always_inline))
+inline void get_board_moves(Move& move) {
     Board board = move.new_board;
     MoveQueue *moves = new MoveQueue(DynamicMoveCompare(board.turn));
 
@@ -309,6 +463,12 @@ void get_board_moves(Move& move) {
 
     // Bishops and Queens
     add_bishop_moves(*moves, board, move_color, other_color);
+
+    // Rooks and Queens
+    add_rook_moves(*moves, board, move_color, other_color);
+
+    // Kings
+    add_king_moves(*moves, board, move_color, other_color);
 
     move.child_moves = (void*) moves;
 }
@@ -387,7 +547,6 @@ Move get_action(Board board) {
             }
             alpha = MAX(alpha, eval);
             // cout << "White's Score: " << eval << ", Best Score: " << best_score << ", (Alpha, Beta): " << alpha << ',' << beta << endl;
-            // cout << (int) move.new_board.white.num_freeze_spells << ',' << (int) move.new_board.white.freeze_spell << endl;
             // board_print(&move.new_board);
             // getchar();
             best_score = MAX(best_score, eval);
