@@ -55,11 +55,11 @@ i16 board_evaluate(Board board) {
     ((freeze_pos / 8) - 1 <= row && row <= (freeze_pos / 8) + 1)))
 
 #define insert_move(piece, moves, board, from, to, freeze_pos, jump_pos, expr) \
-    Board* new_board = new Board; \
-    memcpy(new_board, &board, sizeof(Board)); \
-    new_board->turn = !board.turn; \
-    Color &new_color = board.turn ? new_board->black : new_board->white; \
-    Color &new_other_color = board.turn ? new_board->white : new_board->black; \
+    Board new_board; \
+    memcpy(&new_board, &board, sizeof(Board)); \
+    new_board.turn = !board.turn; \
+    Color &new_color = board.turn ? new_board.black : new_board.white; \
+    Color &new_other_color = board.turn ? new_board.white : new_board.black; \
     const Color &old_color = board.turn ? board.black : board.white; \
     \
     new_color.piece.piece_arr = (old_color.piece.piece_arr & ~from) | to; \
@@ -69,18 +69,18 @@ i16 board_evaluate(Board board) {
     new_other_color.rooks.piece_arr   &= ~to; \
     new_other_color.queens.piece_arr  &= ~to; \
     new_other_color.king.piece_arr    &= ~to; \
-    new_board->freeze_loc = freeze_pos; \
+    new_board.freeze_loc = freeze_pos; \
     if (freeze_pos == 64) { \
         new_color.freeze_spell -= new_color.freeze_spell ? 1 : 0;\
     } else {new_color.num_freeze_spells--; new_color.freeze_spell = 3;} \
-    new_board->jump_loc = jump_pos; \
+    new_board.jump_loc = jump_pos; \
     if (jump_pos == 64) { \
         new_color.jump_spell -= new_color.jump_spell ? 1 : 0;\
     } else {new_color.num_jump_spells--; new_color.jump_spell = 3;} \
     expr; \
     \
-    i16 score = board_evaluate(*new_board); \
-    moves.push({ score, *new_board, NULL}); \
+    i16 score = board_evaluate(new_board); \
+    moves.push({ score, new_board, NULL}); \
     MoveCheckCounter++;
 
 __attribute__((always_inline))
@@ -391,6 +391,7 @@ Move get_action(Board board) {
             // board_print(&move.new_board);
             // getchar();
             best_score = MAX(best_score, eval);
+            delete (MoveQueue *) move.child_moves;
             if (beta <= alpha) {
                 break;
             }
@@ -411,6 +412,7 @@ Move get_action(Board board) {
         }
         best_score = MIN(best_score, eval);
         beta = MIN(beta, eval);
+        delete (MoveQueue *) move.child_moves;
         if (beta <= alpha) {
             break;
         }
