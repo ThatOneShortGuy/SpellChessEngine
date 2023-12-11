@@ -212,6 +212,10 @@ inline void add_bishop_moves(MoveQueue &moves, const Board board, const Color mo
     u64 self_color_pieces = color_pieces(move_color);
     u64 other_color_pieces = color_pieces(other_color);
 
+    #define inserts \
+        if (move_color.bishops.piece_arr & from) {insert_move(bishops, moves, board, from, to, freeze_pos, ;)} \
+        else {insert_move(queens, moves, board, from, to, freeze_pos, ;)}
+
     for (row = 0; row < 8; row++) {
         for (col = 0; col < 8; col++) {
             from = 1ULL << (row * 8 + col);
@@ -219,58 +223,59 @@ inline void add_bishop_moves(MoveQueue &moves, const Board board, const Color mo
                 if (freeze_pos != 64 && (!(other_color_pieces & (1ULL << freeze_pos)) || move_color.num_freeze_spells == 0 || move_color.freeze_spell != 0)) {
                     continue;
                 }
-                if (!(move_color.bishops.piece_arr & from) || in_freeze_range(row, col, freeze_pos) || in_freeze_range(row, col, board.freeze_loc)) continue;
+                if (!((move_color.bishops.piece_arr & from) || (move_color.queens.piece_arr & from)) || in_freeze_range(row, col, freeze_pos) || in_freeze_range(row, col, board.freeze_loc)) continue;
 
                 // Up right
                 to = from >> 7;
                 i = col; j = row;
                 while (!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j > 0) {
-                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    inserts
                     to >>= 7;
                     i++; j--;
                 }
                 if (i < 7 && j > 0 && (other_color_pieces & to)) {
-                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    inserts
                 }
 
                 // Up left
                 to = from >> 9;
                 i = col; j = row;
                 while (!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0 && j > 0) {
-                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    inserts
                     to >>= 9;
                     i--; j--;
                 }
                 if (i > 0 && j > 0 && (other_color_pieces & to)) {
-                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    inserts
                 }
 
                 // Down right
                 to = from << 9;
                 i = col; j = row;
                 while (!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j < 7) {
-                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    inserts
                     to <<= 9;
                     i++; j++;
                 }
                 if (i < 7 && j < 7 && (other_color_pieces & to)) {
-                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    inserts
                 }
 
                 // Down left
                 to = from << 7;
                 i = col; j = row;
                 while (!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0 && j < 7) {
-                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    inserts
                     to <<= 7;
                     i--; j++;
                 }
                 if (i > 0 && j < 7 && (other_color_pieces & to)) {
-                    insert_move(bishops, moves, board, from, to, freeze_pos, ;);
+                    inserts
                 }
             }
         }
     }
+    #undef inserts
 }
 
 void get_board_moves(Move& move) {
@@ -288,7 +293,7 @@ void get_board_moves(Move& move) {
     // Knights
     add_knight_moves(*moves, board, move_color, other_color);
 
-    // Bishops
+    // Bishops and Queens
     add_bishop_moves(*moves, board, move_color, other_color);
 
     move.child_moves = (void*) moves;
