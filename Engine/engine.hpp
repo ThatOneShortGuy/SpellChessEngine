@@ -5,7 +5,7 @@
 typedef int16_t i16;
 
 #define MAX_MOVES 100'000'000
-#define MAX_DEPTH 5
+#define MAX_DEPTH 3
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((b) > (a) ? (a) : (b))

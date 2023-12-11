@@ -183,6 +183,71 @@ inline void add_knight_moves(MoveQueue &moves, const Board board, const Color mo
     }
 }
 
+__attribute__((always_inline))
+inline void add_bishop_moves(MoveQueue &moves, const Board board, const Color move_color, const Color other_color) {
+    u64 from, to;
+    u8 row, col;
+    int i, j;
+
+    u64 self_color_pieces = color_pieces(move_color);
+    u64 other_color_pieces = color_pieces(other_color);
+
+    for (row = 0; row < 8; row++) {
+        for (col = 0; col < 8; col++) {
+            from = 1ULL << (row * 8 + col);
+            if (!(move_color.bishops.piece_arr & from)) continue;
+
+            // Up right
+            to = from >> 7;
+            i = col; j = row;
+            while (!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j > 0) {
+                insert_move(bishops, moves, board, from, to, ;);
+                to >>= 7;
+                i++; j--;
+            }
+            if (i < 7 && j > 0 && (other_color_pieces & to)) {
+                insert_move(bishops, moves, board, from, to, ;);
+            }
+
+            // Up left
+            to = from >> 9;
+            i = col; j = row;
+            while (!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0 && j > 0) {
+                insert_move(bishops, moves, board, from, to, ;);
+                to >>= 9;
+                i--; j--;
+            }
+            if (i > 0 && j > 0 && (other_color_pieces & to)) {
+                insert_move(bishops, moves, board, from, to, ;);
+            }
+
+            // Down right
+            to = from << 9;
+            i = col; j = row;
+            while (!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j < 7) {
+                insert_move(bishops, moves, board, from, to, ;);
+                to <<= 9;
+                i++; j++;
+            }
+            if (i < 7 && j < 7 && (other_color_pieces & to)) {
+                insert_move(bishops, moves, board, from, to, ;);
+            }
+
+            // Down left
+            to = from << 7;
+            i = col; j = row;
+            while (!(self_color_pieces & to) && !(other_color_pieces & to) && i > 0 && j < 7) {
+                insert_move(bishops, moves, board, from, to, ;);
+                to <<= 7;
+                i--; j++;
+            }
+            if (i > 0 && j < 7 && (other_color_pieces & to)) {
+                insert_move(bishops, moves, board, from, to, ;);
+            }
+        }
+    }
+}
+
 void get_board_moves(Move& move) {
     Board board = move.new_board;
     MoveQueue *moves = new MoveQueue(DynamicMoveCompare(board.turn));
@@ -196,13 +261,16 @@ void get_board_moves(Move& move) {
     add_pawn_moves(*moves, board, move_color, other_color);
 
     // Knights
-    add_knight_moves(*moves, board, move_color, other_color);
+    // add_knight_moves(*moves, board, move_color, other_color);
+
+    // Bishops
+    add_bishop_moves(*moves, board, move_color, other_color);
 
     move.child_moves = (void*) moves;
 }
 
 i16 minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximizing_player) {
-    if (MoveCheckCounter > MAX_MOVES || !depth || move.new_board.white.king.piece_arr == 0 || move.new_board.black.king.piece_arr == 0) {
+    if (!depth || move.new_board.white.king.piece_arr == 0 || move.new_board.black.king.piece_arr == 0) {
         return move.score;
     }
 
@@ -230,6 +298,7 @@ i16 minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximiz
             // board_print(&possible_move.new_board);
             // getchar();
             best_score = MAX(best_score, eval);
+            delete (MoveQueue *) possible_move.child_moves;
             if (beta <= alpha) {
                 break;
             }
@@ -245,6 +314,7 @@ i16 minimax(Move& move, const int depth, i16 alpha, i16 beta, const bool maximiz
         // board_print(&possible_move.new_board);
         // getchar();
         best_score = MIN(best_score, eval);
+        delete (MoveQueue *) possible_move.child_moves;
         if (beta <= alpha) {
             break;
         }
