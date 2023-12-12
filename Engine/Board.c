@@ -185,34 +185,63 @@ char* board_to_fen(Board board) {
     return fen;
 }
 
-char* board_diff(const Board board1, const Board board2) {
-    const u64 all_board1 = board_all_squares(board1);
-    const u64 all_board2 = board_all_squares(board2);
+void print_bitboard(u64 bitboard) {
+    for (int i = 0; i < 64; i++) {
+        printf("%llu", (bitboard >> i) & 1);
+        if (i % 8 == 7) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
+
+char* board_diff(const Board prev_board, const Board curr_board) {
+    const u64 all_board1 = board_all_squares(prev_board);
+    const u64 all_board2 = board_all_squares(curr_board);
+
+
+    // board_print(&board1);
+    // board_print(&board2);
+
+    // print_bitboard(prev_turn_color_board);
+    // print_bitboard(curr_turn_other_board);
 
     const u64 diff = all_board1 ^ all_board2;
     const u64 from = diff & all_board1;
     const u64 to = diff & all_board2;
 
-    const int from_col = __builtin_ctzll(from) % 8;
-    const int from_row = __builtin_ctzll(from) / 8;
-    const int to_col = __builtin_ctzll(to) % 8;
-    const int to_row = __builtin_ctzll(to) / 8;
+    const int from_loc = __builtin_ctzll(from);
+    int to_loc = __builtin_ctzll(to);
+    if (to == 0) {
+        const u64 prev_turn_color_board = prev_board.turn ? color_pieces(prev_board.white) : color_pieces(prev_board.black);
+        const u64 curr_turn_other_board = curr_board.turn ? color_pieces(curr_board.white) : color_pieces(curr_board.black);
+        // printf("Same location\n");
+        // printf("%llu\n", prev_turn_color_board & curr_turn_other_board);
+        to_loc = __builtin_ctzll(prev_turn_color_board & curr_turn_other_board);
+    }
+    const int from_col = from_loc % 8;
+    const int from_row = from_loc / 8;
+    const int to_col = to_loc % 8;
+    const int to_row = to_loc / 8;
+    // printf("(%d, %d) -> %d %d %d %d\n", from_loc, to_loc, from_col, from_row, to_col, to_row);
 
     char *diff_str = (char*) calloc(100, sizeof(char));
     int diff_index = 0;
 
     diff_index += sprintf(diff_str+diff_index, "%c%c %c%c ", 'a' + from_col, '8' - from_row, 'a' + to_col, '8' - to_row);
 
-    if (board1.freeze_loc == board2.freeze_loc) {
+    if (prev_board.freeze_loc == curr_board.freeze_loc || curr_board.freeze_loc == 64) {
         diff_index += sprintf(diff_str+diff_index, "- ");
     } else {
-        diff_index += sprintf(diff_str+diff_index, "%c%c ", 'a' + __builtin_clzll(board1.freeze_loc) % 8, '8' - __builtin_clzll(board1.freeze_loc) / 8);
+        printf("Freeze loc: %d, white freezes: %d, black freezes: %d\n", curr_board.freeze_loc, curr_board.white.num_freeze_spells, curr_board.black.num_freeze_spells);
+        diff_index += sprintf(diff_str+diff_index, "%c%c ", 'a' + curr_board.freeze_loc % 8, '8' - curr_board.freeze_loc / 8);
     }
 
-    if (board1.jump_loc == board2.jump_loc) {
+    if (prev_board.jump_loc == curr_board.jump_loc || curr_board.jump_loc == 64) {
         diff_index += sprintf(diff_str+diff_index, "- ");
     } else {
-        diff_index += sprintf(diff_str+diff_index, "%c%c ", 'a' + __builtin_clzll(board1.jump_loc) % 8, '8' - __builtin_clzll(board1.jump_loc) / 8);
+        printf("Jump loc: %d, white jumps: %d, black jumps: %d\n", curr_board.jump_loc, curr_board.white.num_jump_spells, curr_board.black.num_jump_spells);
+        diff_index += sprintf(diff_str+diff_index, "%c%c ", 'a' + curr_board.jump_loc % 8, '8' - curr_board.jump_loc / 8);
     }
 
     return diff_str;

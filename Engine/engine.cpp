@@ -557,7 +557,7 @@ Move get_action(Board board) {
         // cout << "MoveCheckCounter: " << MoveCheckCounter << endl;
         return best_action;
     }
-    #pragma omp parallel for private(move, eval, alpha, maximizing_player) reduction(min: best_score)
+    #pragma omp parallel for private(move, eval, alpha, maximizing_player)
     for (u64 i = 0; i < num_moves; i++) {
         move = moves.top();
         moves.pop();
