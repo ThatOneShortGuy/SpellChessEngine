@@ -25,13 +25,13 @@ int main(int argc, char *argv[]) {
     }
 
     // board_print(&board);
-    i16 eval = board_evaluate(board);
+    // i16 eval = board_evaluate(board);
     // printf("Evaluation: %i\n", eval);
 
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
     Move best_move = get_action(board);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    // auto end = std::chrono::high_resolution_clock::now();
+    // auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
     // printf("Time: %f ms\n", ((double) duration)/1000/1000);
     // getchar();
     // printf("Best move: %i\n", best_move.score);

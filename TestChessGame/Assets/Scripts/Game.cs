@@ -323,7 +323,7 @@ public class Game : MonoBehaviour
 		else
 			Fen += " " + enPasPos[0];
 
-		Fen += " " + wTurn.ToString() + fTurn.ToString();
+		Fen += " " + wTurn.ToString() + " " + fTurn.ToString();
 
 		if (frozenPiece == "")
 			Fen += " -";
