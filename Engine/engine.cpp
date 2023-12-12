@@ -556,7 +556,7 @@ Move get_action(Board board) {
             }
         }
         best_action.score = best_score;
-        cout << "MoveCheckCounter: " << MoveCheckCounter << endl;
+        // cout << "MoveCheckCounter: " << MoveCheckCounter << endl;
         return best_action;
     }
     for (u64 i = 0; i < num_moves; i++) {
@@ -577,6 +577,6 @@ Move get_action(Board board) {
         }
     }
     best_action.score = best_score;
-    cout << "MoveCheckCounter: " << MoveCheckCounter << endl;
+    // cout << "MoveCheckCounter: " << MoveCheckCounter << endl;
     return best_action;
 }

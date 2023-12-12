@@ -26,22 +26,22 @@ int main(int argc, char *argv[]) {
 
     // board_print(&board);
     i16 eval = board_evaluate(board);
-    printf("Evaluation: %i\n", eval);
+    // printf("Evaluation: %i\n", eval);
 
     auto start = std::chrono::high_resolution_clock::now();
     Move best_move = get_action(board);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    printf("Time: %f ms\n", ((double) duration)/1000/1000);
+    // printf("Time: %f ms\n", ((double) duration)/1000/1000);
     // getchar();
-    printf("Best move: %i\n", best_move.score);
-    board_print(&best_move.new_board);
+    // printf("Best move: %i\n", best_move.score);
+    // board_print(&best_move.new_board);
     printf("%s\n", board_to_fen(best_move.new_board));
-    for (int i = 0; i < 50; i++) {
-        board = best_move.new_board;
-        best_move = get_action(board);
-        getchar();
-        printf("Best move for move %i: %i\n", i+2, best_move.score);
-        board_print(&best_move.new_board);
-    }
+    // for (int i = 0; i < 50; i++) {
+    //     board = best_move.new_board;
+    //     best_move = get_action(board);
+    //     getchar();
+    //     printf("Best move for move %i: %i\n", i+2, best_move.score);
+    //     board_print(&best_move.new_board);
+    // }
 }
