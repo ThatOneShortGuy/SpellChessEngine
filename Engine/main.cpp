@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]) {
     if (argc != 7 && argc != 11) {
-        printf("Usage: %s <fen> [<frozen> <jumpable> <spells> <waiting_spells>]\nGot %i params, expected 6 or 10\n", argv[0], argc);
+        printf("Usage: %s <fen> [<frozen> <jumpable> <spells> <waiting_spells>]\nGot %i params, expected 6 or 10\n", argv[0], argc-1);
         for (int i = 1; i < argc; i++) {
             if (i < 10)       printf("%i  | %s\n", i, argv[i]);
             else if (i < 100) printf("%i | %s\n", i, argv[i]);

@@ -3,6 +3,7 @@ GFLAGS = -Wall -O3 -fopenmp -flto -funroll-loops
 
 main: $(SRC)main.o $(SRC)Board.o $(SRC)engine.o
 	g++ $(GFLAGS) -o main $(SRC)main.o $(SRC)Board.o $(SRC)engine.o
+	copy main.exe /D TestChessGame\Library\ScriptAssemblies\engine.exe
 
 $(SRC)main.o: $(SRC)main.cpp $(SRC)Board.h $(SRC)engine.hpp
 	g++ $(GFLAGS) -c $(SRC)main.cpp -o $(SRC)main.o
