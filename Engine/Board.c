@@ -184,3 +184,39 @@ char* board_to_fen(Board board) {
 
     return fen;
 }
+
+char* board_diff(const Board board1, const Board board2) {
+    const u64 all_board1 = board_all_squares(board1);
+    const u64 all_board2 = board_all_squares(board2);
+
+    board_print(&board1);
+    board_print(&board2);
+
+    const u64 diff = all_board1 ^ all_board2;
+    const u64 from = diff & all_board1;
+    const u64 to = diff & all_board2;
+
+    const int from_col = __builtin_ctzll(from) % 8;
+    const int from_row = __builtin_ctzll(from) / 8;
+    const int to_col = __builtin_ctzll(to) % 8;
+    const int to_row = __builtin_ctzll(to) / 8;
+
+    char *diff_str = (char*) calloc(100, sizeof(char));
+    int diff_index = 0;
+
+    diff_index += sprintf(diff_str+diff_index, "%c%c %c%c ", 'a' + from_col, '8' - from_row, 'a' + to_col, '8' - to_row);
+
+    if (board1.freeze_loc == board2.freeze_loc) {
+        diff_index += sprintf(diff_str+diff_index, "- ");
+    } else {
+        diff_index += sprintf(diff_str+diff_index, "%c%c ", 'a' + __builtin_clzll(board1.freeze_loc) % 8, '8' - __builtin_clzll(board1.freeze_loc) / 8);
+    }
+
+    if (board1.jump_loc == board2.jump_loc) {
+        diff_index += sprintf(diff_str+diff_index, "- ");
+    } else {
+        diff_index += sprintf(diff_str+diff_index, "%c%c ", 'a' + __builtin_clzll(board1.jump_loc) % 8, '8' - __builtin_clzll(board1.jump_loc) / 8);
+    }
+
+    return diff_str;
+}

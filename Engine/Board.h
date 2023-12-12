@@ -108,5 +108,6 @@ void board_print(const Board *board);
 u64 color_pieces(const Color color);
 u64 board_all_squares(const Board board);
 char* board_to_fen(Board board);
+char* board_diff(const Board board1, const Board board2);
 
 #endif

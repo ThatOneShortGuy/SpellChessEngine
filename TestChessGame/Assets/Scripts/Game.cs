@@ -304,9 +304,11 @@ public class Game : MonoBehaviour
 					EmptyPos++;
 				}
 			}
-			if(EmptyPos != 0)
+			if (EmptyPos != 0)
+			{
 				Fen += EmptyPos.ToString();
-			Fen += '/';
+				Fen += '/';
+			}
 			EmptyPos = 0;
 		}
 
@@ -314,16 +316,12 @@ public class Game : MonoBehaviour
 		Fen += " "+currentPlayer[0] + " ";
 		if (K)
 			Fen += "K";
-		else Fen += "-";
 		if (Q)
 			Fen += "Q";
-		else Fen += "-";
 		if (k)
 			Fen += "k";
-		else Fen += "-";
 		if (q)
 			Fen += "q";
-		else Fen += "-";
 		if (!K && !Q && !k && !q)
 			Fen += "-";
 
