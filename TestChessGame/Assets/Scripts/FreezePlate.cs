@@ -53,7 +53,7 @@ public class FreezePlate : MonoBehaviour
 		
 		Game game = controller.GetComponent<Game>();
 
-		string FrozenPos = BoardPosLetter[matrixX] + (matrixY).ToString();
+		string FrozenPos = BoardPosLetter[matrixX + 1] + (matrixY).ToString();
 		game.frozenPiece = FrozenPos;
 
 	   Game sc = controller.GetComponent<Game>();

@@ -173,19 +173,25 @@ public class MovePlate : MonoBehaviour
 		}
 		if (MovingPiece.name == "black_rook")
 		{
+			if(matrixX == 7)
+				controller.GetComponent<Game>().k = false;
+			else
+				controller.GetComponent<Game>().q = false;
 			MovingPiece.hasMoved = true;
-			print(matrixX);
 		}
 		if (MovingPiece.name == "white_King")
 		{
 			MovingPiece.hasMoved = true;
-			controller.GetComponent<Game>().k = false;
-			controller.GetComponent<Game>().q = false;
+			controller.GetComponent<Game>().K = false;
+			controller.GetComponent<Game>().Q = false;
 		}
 		if (MovingPiece.name == "white_rook")
 		{
+			if (matrixX == 7)
+				controller.GetComponent<Game>().K = false;
+			else
+				controller.GetComponent<Game>().Q = false;
 			MovingPiece.hasMoved = true;
-			print(matrixX);
 		}
 
 		controller.GetComponent<Game>().NextTurn();

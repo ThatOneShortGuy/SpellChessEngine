@@ -226,13 +226,13 @@ public class Chessman : MonoBehaviour
 	{
 
 		Game sc = controller.GetComponent<Game>();
-		GameObject cp = sc.GetPosition(xBoard, yBoard);//Clicked Piece
+		GameObject cp = sc.GetPosition(xBoard, yBoard); //Clicked Piece
 
 		switch (player)
 		{
 			case ("white"):
-				if (cp.GetComponent<Chessman>().hasMoved == false && (sc.GetPosition(0, 0).GetComponent<Chessman>().hasMoved == false ||
-					sc.GetPosition(7, 0).GetComponent<Chessman>().hasMoved == false))
+				if (cp.GetComponent<Chessman>().hasMoved == false && ((sc.GetPosition(0, 0) != null && sc.GetPosition(0, 0).GetComponent<Chessman>().hasMoved == false) ||
+					(sc.GetPosition(7, 0) != null && sc.GetPosition(7, 0).GetComponent<Chessman>().hasMoved == false)))
 				{
 					if (sc.GetPosition(xBoard - 3, yBoard) == null && sc.GetPosition(xBoard - 2, yBoard) == null && sc.GetPosition(xBoard - 1, yBoard) == null && sc.GetPosition(0, 0).GetComponent<Chessman>().hasMoved == false)
 						MovePlateSpawn(xBoard - 3, yBoard);
@@ -241,8 +241,8 @@ public class Chessman : MonoBehaviour
 				}
 				return;
 			case ("black"):
-				if (cp.GetComponent<Chessman>().hasMoved == false && (sc.GetPosition(0, 7).GetComponent<Chessman>().hasMoved == false ||
-					sc.GetPosition(7, 7).GetComponent<Chessman>().hasMoved == false))
+				if (cp.GetComponent<Chessman>().hasMoved == false && ((sc.GetPosition(0, 7) != null && sc.GetPosition(0, 7).GetComponent<Chessman>().hasMoved == false) ||
+					(sc.GetPosition(7, 7) != null && sc.GetPosition(7, 7).GetComponent<Chessman>().hasMoved == false)))
 				{
 					if (sc.GetPosition(xBoard - 3, yBoard) == null && sc.GetPosition(xBoard - 2, yBoard) == null && sc.GetPosition(xBoard - 1, yBoard) == null && sc.GetPosition(0, 7).GetComponent<Chessman>().hasMoved == false)
 						MovePlateSpawn(xBoard - 3, yBoard);

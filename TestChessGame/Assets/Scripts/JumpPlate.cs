@@ -51,7 +51,7 @@ public class JumpPlate : MonoBehaviour
 		Game sc = controller.GetComponent<Game>();
 		Spells spellsScript = reference.GetComponent<Spells>();
 
-		string jumpPos = BoardPosLetter[matrixX] + (matrixY).ToString();
+		string jumpPos = BoardPosLetter[matrixX] + (matrixY + 1).ToString();
 		game.jumpPiece = jumpPos;
 
 		GameObject plate = sc.jumpPlates[matrixX, matrixY];

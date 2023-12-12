@@ -284,9 +284,9 @@ public class Game : MonoBehaviour
 			for (int j = 0; j < 8; j++)
 			{
 
-				if(EmptyPos == 8)
+				if (EmptyPos == 8)
 				{
-					Fen += EmptyPos.ToString();
+					Fen += EmptyPos.ToString() + "/";
 					EmptyPos = 0;
 				}
 				if (GetPosition(j, i) != null) 
@@ -297,6 +297,8 @@ public class Game : MonoBehaviour
 						EmptyPos = 0;
 					}
 					Fen = Fen + FenCodes[GetPosition(j, i).name.ToString()];
+					if (j == 7 && i != 0)
+						Fen += "/";
 					
 				}
 				else
@@ -307,7 +309,8 @@ public class Game : MonoBehaviour
 			if (EmptyPos != 0)
 			{
 				Fen += EmptyPos.ToString();
-				Fen += '/';
+				if (i != 0)
+					Fen += "/";
 			}
 			EmptyPos = 0;
 		}
