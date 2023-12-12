@@ -142,10 +142,10 @@ char* board_to_fen(Board board) {
     fen[fen_index++] = ' ';
     fen[fen_index++] = board.turn ? 'b' : 'w';
     fen[fen_index++] = ' ';
-    fen[fen_index++] = board.white.castling ? 'K' : '-';
-    fen[fen_index++] = board.white.castling & 0b10 ? 'Q' : '-';
-    fen[fen_index++] = board.black.castling ? 'k' : '-';
-    fen[fen_index++] = board.black.castling & 0b10 ? 'q' : '-';
+    if (board.white.castling & 0b01) fen[fen_index++] = 'K';
+    if (board.white.castling & 0b10) fen[fen_index++] = 'Q';
+    if (board.black.castling & 0b01) fen[fen_index++] = 'k';
+    if (board.black.castling & 0b10) fen[fen_index++] = 'q';
     fen[fen_index++] = ' ';
     if (board.white.en_passant == 0) {
         fen[fen_index++] = '-';

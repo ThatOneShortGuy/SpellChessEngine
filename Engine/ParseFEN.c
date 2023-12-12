@@ -81,6 +81,8 @@ void parse_castling(Board *board, char *castling) {
                 break;
             LIST_OF_CASTLING
             #undef X
+            case '\0':
+                return;
             default:
                 printf("Invalid character while parsing castling FEN: %c\n", castling[i]);
                 exit(1);

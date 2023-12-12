@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     // getchar();
     // printf("Best move: %i\n", best_move.score);
     // board_print(&best_move.new_board);
-    // printf("%s\n", board_to_fen(best_move.new_board));
+    printf("%s\n", board_to_fen(best_move.new_board));
     printf("%s\n", board_diff(board, best_move.new_board));
     // for (int i = 0; i < 50; i++) {
     //     board = best_move.new_board;
