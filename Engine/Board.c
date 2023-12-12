@@ -233,14 +233,14 @@ char* board_diff(const Board prev_board, const Board curr_board) {
     if (prev_board.freeze_loc == curr_board.freeze_loc || curr_board.freeze_loc == 64) {
         diff_index += sprintf(diff_str+diff_index, "- ");
     } else {
-        printf("Freeze loc: %d, white freezes: %d, black freezes: %d\n", curr_board.freeze_loc, curr_board.white.num_freeze_spells, curr_board.black.num_freeze_spells);
+        // printf("Freeze loc: %d, white freezes: %d, black freezes: %d\n", curr_board.freeze_loc, curr_board.white.num_freeze_spells, curr_board.black.num_freeze_spells);
         diff_index += sprintf(diff_str+diff_index, "%c%c ", 'a' + curr_board.freeze_loc % 8, '8' - curr_board.freeze_loc / 8);
     }
 
     if (prev_board.jump_loc == curr_board.jump_loc || curr_board.jump_loc == 64) {
         diff_index += sprintf(diff_str+diff_index, "- ");
     } else {
-        printf("Jump loc: %d, white jumps: %d, black jumps: %d\n", curr_board.jump_loc, curr_board.white.num_jump_spells, curr_board.black.num_jump_spells);
+        // printf("Jump loc: %d, white jumps: %d, black jumps: %d\n", curr_board.jump_loc, curr_board.white.num_jump_spells, curr_board.black.num_jump_spells);
         diff_index += sprintf(diff_str+diff_index, "%c%c ", 'a' + curr_board.jump_loc % 8, '8' - curr_board.jump_loc / 8);
     }
 
