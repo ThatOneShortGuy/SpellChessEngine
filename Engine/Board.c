@@ -189,9 +189,6 @@ char* board_diff(const Board board1, const Board board2) {
     const u64 all_board1 = board_all_squares(board1);
     const u64 all_board2 = board_all_squares(board2);
 
-    board_print(&board1);
-    board_print(&board2);
-
     const u64 diff = all_board1 ^ all_board2;
     const u64 from = diff & all_board1;
     const u64 to = diff & all_board2;
