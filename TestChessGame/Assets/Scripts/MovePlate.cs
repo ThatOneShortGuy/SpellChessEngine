@@ -77,7 +77,14 @@ public class MovePlate : MonoBehaviour
 			&& (MovingPiece.name == "black_pawn" || MovingPiece.name == "white_pawn")) 
 		{
 			MovingPiece.isEnPassantable = true;
-			string PiecePos = BoardPosLetter[matrixX] + (matrixY).ToString();
+			string PiecePos = BoardPosLetter[matrixX];
+			if (MovingPiece.GetPlayer() == "white")
+			{
+				PiecePos += 3;
+			} else
+			{
+				PiecePos += 6;
+			}
 			controller.GetComponent<Game>().enPasPos[0] = PiecePos;
 
 		}

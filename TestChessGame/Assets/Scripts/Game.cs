@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,7 +8,9 @@ using UnityEngine.UI;
 
 public class Game : MonoBehaviour
 {
-    public GameObject chesspiece;
+	private AIEngineCommunicator aiCommunicator;// This is in charge of calling the AI Engine
+
+	public GameObject chesspiece;
 	public GameObject freezeSpellW;
 	public GameObject freezeSpellB;
 	public GameObject jumpSpellW;
@@ -64,6 +67,8 @@ public class Game : MonoBehaviour
 	public int bCanUseSpellj = 0;
 	void Start() // this is where everything will start when program runs
     {
+		aiCommunicator = new AIEngineCommunicator("Assets/Plugins/engine.exe"); //Path to where the Engine will be
+
 		WFreezeSpells = 5;
 		BFreezeSpells = 5;
 		WJumpSpells = 2;
@@ -309,19 +314,26 @@ public class Game : MonoBehaviour
 		Fen += " "+currentPlayer[0] + " ";
 		if (K)
 			Fen += "K";
+		else Fen += "-";
 		if (Q)
 			Fen += "Q";
+		else Fen += "-";
 		if (k)
 			Fen += "k";
+		else Fen += "-";
 		if (q)
 			Fen += "q";
+		else Fen += "-";
 		if (!K && !Q && !k && !q)
 			Fen += "-";
 
 		if (enPasPos[0] == "")
 			Fen += " -";
 		else
+		{
 			Fen += " " + enPasPos[0];
+			enPasPos[0] = "";
+		}
 
 		Fen += " " + wTurn.ToString() + " " + fTurn.ToString();
 
@@ -342,8 +354,8 @@ public class Game : MonoBehaviour
 		}
 		Fen += " " + WFreezeSpells.ToString() + WJumpSpells.ToString() + BFreezeSpells.ToString() + BJumpSpells.ToString();
 		Fen += " " + wCanUseSpell.ToString() + wCanUseSpellj.ToString() + bCanUseSpell.ToString() + bCanUseSpellj.ToString();
-
-		print(Fen);
+		if(currentPlayer == "black")
+			aiCommunicator.CallAIEngine(Fen);
 	}
 
 	public void Update()
@@ -368,6 +380,37 @@ public class Game : MonoBehaviour
 		GameObject.FindGameObjectWithTag("WinnerText").GetComponent<Text>().text = playerWinner + " is the winner!";
 
 		GameObject.FindGameObjectWithTag("RestartText").GetComponent<Text>().enabled = true;
+	}
+	public class AIEngineCommunicator
+	{
+		private string aiExecutablePath;
+
+		public AIEngineCommunicator(string aiExecutablePath)
+		{
+			this.aiExecutablePath = aiExecutablePath;
+		}
+
+		public void CallAIEngine(string fen)
+		{
+			Process aiProcess = new Process();
+			aiProcess.StartInfo.FileName = aiExecutablePath;
+			aiProcess.StartInfo.Arguments = fen;
+			aiProcess.StartInfo.UseShellExecute = false;
+			aiProcess.StartInfo.RedirectStandardOutput = true; // Assuming the AI outputs the move
+			aiProcess.StartInfo.CreateNoWindow = true;
+
+			aiProcess.Start();
+
+			string aiMove = aiProcess.StandardOutput.ReadToEnd(); // Read the AI's move
+			aiProcess.WaitForExit();
+
+			print(fen);
+			print(aiMove);
+
+			// Handle the AI move here if applicable
+
+			aiProcess.Close();
+		}
 	}
 
 }
