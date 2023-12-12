@@ -80,16 +80,15 @@ i16 board_evaluate(Board board) {
     expr; \
     \
     i16 score = board_evaluate(new_board); \
-    moves.push({ score, new_board, NULL}); \
-    MoveCheckCounter++;
+    moves.push({ score, new_board, NULL});
 
 __attribute__((always_inline))
 inline void add_pawn_moves(MoveQueue &moves, const Board board, const Color move_color, const Color other_color) {
     u64 from, to;
     u8 row, col;
-    u64 all_squares = board_all_squares(board);
+    const u64 all_squares = board_all_squares(board);
     // u64 self_color_pieces = color_pieces(move_color);
-    u64 other_color_pieces = color_pieces(other_color);
+    const u64 other_color_pieces = color_pieces(other_color);
 
     for (row = 0; row < 8; row++) {
         for (col = 0; col < 8; col++) {
@@ -143,8 +142,8 @@ inline void add_knight_moves(MoveQueue &moves, const Board board, const Color mo
     u64 from, to;
     u8 row, col;
 
-    u64 self_color_pieces = color_pieces(move_color);
-    u64 other_color_pieces = color_pieces(other_color);
+    const u64 self_color_pieces = color_pieces(move_color);
+    const u64 other_color_pieces = color_pieces(other_color);
 
     #define inserts insert_move(knights, moves, board, from, to, freeze_pos, 64, ;)
 
@@ -214,11 +213,10 @@ __attribute__((always_inline))
 inline void add_bishop_moves(MoveQueue &moves, const Board board, const Color move_color, const Color other_color) {
     u64 from, to;
     u8 row, col;
-    int i, j;
 
-    u64 self_color_pieces = color_pieces(move_color);
-    u64 other_color_pieces = color_pieces(other_color);
-    u64 all_squares = self_color_pieces | other_color_pieces;
+    const u64 self_color_pieces = color_pieces(move_color);
+    const u64 other_color_pieces = color_pieces(other_color);
+    const u64 all_squares = self_color_pieces | other_color_pieces;
 
     #define inserts \
         if (!(to == (1ULL << jump_pos))) { \
@@ -240,7 +238,7 @@ inline void add_bishop_moves(MoveQueue &moves, const Board board, const Color mo
 
                     // Up right
                     to = from >> 7;
-                    i = col; j = row;
+                    int i = col; int j = row;
                     while ((!(self_color_pieces & to) && !(other_color_pieces & to) && i < 7 && j > 0) || (to == (1ULL << jump_pos))) {
                         inserts
                         to >>= 7;
@@ -298,9 +296,9 @@ inline void add_rook_moves(MoveQueue &moves, const Board board, const Color move
     u8 row, col;
     int i, j;
 
-    u64 self_color_pieces = color_pieces(move_color);
-    u64 other_color_pieces = color_pieces(other_color);
-    u64 all_squares = self_color_pieces | other_color_pieces;
+    const u64 self_color_pieces = color_pieces(move_color);
+    const u64 other_color_pieces = color_pieces(other_color);
+    const u64 all_squares = self_color_pieces | other_color_pieces;
 
     #define inserts \
         if (!(to == (1ULL << jump_pos))) { \
@@ -379,8 +377,8 @@ inline void add_king_moves(MoveQueue &moves, const Board board, const Color move
     u64 from, to;
     u8 row, col;
 
-    u64 self_color_pieces = color_pieces(move_color);
-    u64 other_color_pieces = color_pieces(other_color);
+    const u64 self_color_pieces = color_pieces(move_color);
+    const u64 other_color_pieces = color_pieces(other_color);
 
     #define inserts insert_move(king, moves, board, from, to, freeze_pos, 64, ;)
     
@@ -447,11 +445,11 @@ inline void add_king_moves(MoveQueue &moves, const Board board, const Color move
 
 __attribute__((always_inline))
 inline void get_board_moves(Move& move) {
-    Board board = move.new_board;
+    const Board board = move.new_board;
     MoveQueue *moves = new MoveQueue(DynamicMoveCompare(board.turn));
 
-    Color move_color = board.turn ? board.black : board.white;
-    Color other_color = board.turn ? board.white : board.black;
+    const Color move_color = board.turn ? board.black : board.white;
+    const Color other_color = board.turn ? board.white : board.black;
 
     // cout << "Move color: " << (board.turn ? "black" : "white") << endl;
     
@@ -559,6 +557,7 @@ Move get_action(Board board) {
         // cout << "MoveCheckCounter: " << MoveCheckCounter << endl;
         return best_action;
     }
+    #pragma omp parallel for private(move, eval, alpha, maximizing_player) reduction(min: best_score)
     for (u64 i = 0; i < num_moves; i++) {
         move = moves.top();
         moves.pop();
@@ -572,9 +571,9 @@ Move get_action(Board board) {
         best_score = MIN(best_score, eval);
         beta = MIN(beta, eval);
         delete (MoveQueue *) move.child_moves;
-        if (beta <= alpha) {
-            break;
-        }
+        // if (beta <= alpha) {
+        //     break;
+        // }
     }
     best_action.score = best_score;
     // cout << "MoveCheckCounter: " << MoveCheckCounter << endl;
